@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>School Fees Entry Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Optional: Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <!-- Excel Parser (SheetJS) for Bulk Upload + Template Download -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f3f5fb;
+      color: #222;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 20px 24px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      background: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 22px;
+      color: #111827;
+      overflow: hidden;
+    }
+
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .title-block h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .title-block p {
+      margin: 2px 0 0 0;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      font-weight: 500;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #e5e7eb;
+      margin: 16px 0 12px 0;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+    }
+
+    .tab-btn span.icon {
+      font-size: 14px;
+    }
+
+    .tab-btn.active {
+      background: #1d4ed8;
+      color: #ffffff;
+      border-color: #1d4ed8;
+      box-shadow: 0 5px 14px rgba(37, 99, 235, 0.3);
+    }
+
+    .tab-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(148, 163, 184, 0.4);
+    }
+
+    .info-text {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 14px;
+    }
+
+    .info-text b {
+      color: #111827;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 14px 18px;
+      margin-bottom: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .field label .required {
+      color: #dc2626;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      padding: 7px 10px;
+      font-size: 13px;
+      outline: none;
+      background: #f9fafb;
+      transition: all 0.15s ease;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: #2563eb;
+      background: #ffffff;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.15);
+    }
+
+    .field textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .small-hint {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .btn {
+      border-radius: 999px;
+      padding: 8px 18px;
+      border: none;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background: #1d4ed8;
+      color: #ffffff;
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.6);
+    }
+
+    .btn-secondary {
+      background: #f9fafb;
+      color: #111827;
+      border: 1px solid #e5e7eb;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e7eb;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 13px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      display: none;
+    }
+
+    .status.success {
+      background: #ecfdf3;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .status.error {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+
+    .status span.label {
+      font-weight: 600;
+      margin-right: 4px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .bulk-section {
+      margin-top: 8px;
+    }
+
+    .bulk-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.1fr);
+      gap: 18px;
+    }
+
+    @media (max-width: 900px) {
+      .bulk-layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .template-box {
+      background: #f9fafb;
+      border-radius: 12px;
+      border: 1px dashed #d1d5db;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: #4b5563;
+    }
+
+    .preview-box {
+      background: #f9fafb;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      padding: 10px;
+      max-height: 280px;
+      overflow: auto;
+      font-size: 11px;
+    }
+
+    .preview-box table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .preview-box th,
+    .preview-box td {
+      padding: 4px 6px;
+      border: 1px solid #e5e7eb;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .preview-box th {
+      background: #e5e7eb;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      border: 1px solid #e5e7eb;
+      color: #4b5563;
+      gap: 4px;
+      margin-right: 4px;
+      margin-top: 4px;
+    }
+
+    .tag span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+
+    .tag.red span.dot {
+      background: #ef4444;
+    }
+
+    .tag.blue span.dot {
+      background: #3b82f6;
+    }
+
+    .subtle-note {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+
+    .pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .filter-box {
+      background: #f9fafb;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+    }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px 16px;
+    }
+
+    .filter-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #4b5563;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        <div class="header-left">
+          <div class="logo">
+            J
+          </div>
+          <div class="title-block">
+            <h1>School Fees Entry Tool</h1>
+            <p>Manage Opening Balance, Tuition Fees_25-26 & Bus Fees_25-26 with single and bulk payments.</p>
+          </div>
+        </div>
+        <div class="badge">703 Students • Student ID mandatory</div>
+      </div>
+
+      <hr />
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="singleTab">
+          <span class="icon">🧾</span> Single Entry
+        </button>
+        <button class="tab-btn" data-tab="bulkTab">
+          <span class="icon">📊</span> Bulk Excel Upload
+        </button>
+      </div>
+
+      <!-- Single Entry Section -->
+      <div id="singleTab" class="tab-content">
+        <p class="info-text">
+          <b>Single Entry</b> – Use this for one student at a time. Student ID is compulsory.  
+          Fee type must match the master fee structure in your Google Sheet. The backend (code.gs)
+          will validate and show error if total fee collection goes beyond fixed fees.
+        </p>
+
+        <!-- FILTERS: Class & Student Name -->
+        <div class="filter-box">
+          <div class="filter-title">Search Student</div>
+          <div class="filter-grid">
+            <div class="field">
+              <label>Class Filter</label>
+              <select id="filter_class">
+                <option value="">All Classes</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Student Name Filter</label>
+              <select id="filter_student">
+                <option value="">Select Student</option>
+              </select>
+              <div class="small-hint">
+                On selecting a student, Student ID / Name / Class in the form will auto-fill.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <form id="singleEntryForm">
+          <div class="form-grid">
+            <div class="field">
+              <label>Student ID <span class="required">*</span></label>
+              <input type="text" id="se_studentId" name="studentId" required placeholder="E.g., S1234" />
+              <div class="small-hint">Unique ID as per your master sheet</div>
+            </div>
+
+            <div class="field">
+              <label>Student Name</label>
+              <input type="text" id="se_studentName" name="studentName" placeholder="E.g., Rahul Kumar" />
+            </div>
+
+            <div class="field">
+              <label>Class</label>
+              <input type="text" id="se_class" name="class" placeholder="E.g., Grade 5 A" />
+            </div>
+
+            <div class="field">
+              <label>Receipt Date</label>
+              <input type="date" id="se_receiptDate" name="receiptDate" />
+            </div>
+
+            <div class="field">
+              <label>Fee Type <span class="required">*</span></label>
+              <select id="se_feeType" name="feeType" required>
+                <option value="">-- Select Fee Type --</option>
+                <option value="Opening Balance">Opening Balance</option>
+                <option value="Tuition Fees_25-26">Tuition Fees_25-26</option>
+                <option value="Bus Fees_25-26">Bus Fees_25-26</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Amount (₹) <span class="required">*</span></label>
+              <input type="number" id="se_amount" name="amount" min="0" step="0.01" required placeholder="E.g., 15000" />
+            </div>
+
+            <div class="field">
+              <label>Receipt No <span class="required">*</span></label>
+              <input type="text" id="se_receiptNo" name="receiptNo" required placeholder="Receipt number" />
+            </div>
+
+            <div class="field">
+              <label>Payment Mode <span class="required">*</span></label>
+              <select id="se_paymentMode" name="paymentMode" required>
+                <option value="">-- Select --</option>
+                <option value="Cash">Cash</option>
+                <option value="Bank">Bank</option>
+              </select>
+              <div class="small-hint">If Bank is selected, UTR No is mandatory.</div>
+            </div>
+
+            <div class="field">
+              <label>UTR No (for Bank payments)</label>
+              <input type="text" id="se_utrNo" name="utrNo" placeholder="Enter UTR No if Payment Mode is Bank" />
+            </div>
+
+            <div class="field">
+              <label>Remarks</label>
+              <textarea id="se_remarks" name="remarks" placeholder="Optional notes"></textarea>
+            </div>
+          </div>
+
+          <div class="pill-group">
+            <div class="tag">
+              <span class="dot"></span> Tuition & Bus fees checked in backend
+            </div>
+            <div class="tag red">
+              <span class="dot"></span> If total collection > fixed fees → error
+            </div>
+            <div class="tag blue">
+              <span class="dot"></span> Student ID is compulsory
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="btn btn-secondary" id="se_resetBtn">Clear</button>
+            <button type="submit" class="btn btn-primary">
+              <span>Save Single Entry</span> 💾
+            </button>
+          </div>
+
+          <div id="singleStatus" class="status"></div>
+        </form>
+      </div>
+
+      <!-- Bulk Upload Section -->
+      <div id="bulkTab" class="tab-content hidden">
+        <p class="info-text">
+          <b>Bulk Excel Upload</b> – Upload multiple records at once.  
+          Use the Excel template below. For bank payments, UTR No is mandatory.
+          Backend will validate against fixed fee structure for each student.
+        </p>
+
+        <div class="bulk-section">
+          <div class="bulk-layout">
+            <div>
+              <div class="template-box">
+                <div class="template-title">Download Excel Template</div>
+                <p style="margin:4px 0 8px 0;">
+                  Click below to download the template file. It already contains all required headers  
+                  (Student_ID, Student_Name, Class, Receipt_Date, Fee_Type, Amount, Receipt_No, Payment_Mode, UTR_No, Remarks).
+                </p>
+                <button type="button" class="btn btn-secondary" id="downloadTemplateBtn">
+                  Download Excel Template ⬇️
+                </button>
+              </div>
+
+              <div style="margin-top: 14px;">
+                <div class="field">
+                  <label>Upload Excel File (.xlsx) <span class="required">*</span></label>
+                  <input type="file" id="bulkFileInput" accept=".xlsx" />
+                  <div class="small-hint">
+                    After selecting file, a preview of first few rows will appear on the right.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="preview-box" id="bulkPreview">
+                No file selected. Upload an Excel file to see preview here.
+              </div>
+              <p class="subtle-note">
+                Note: Before upload, the tool will check:<br />
+                1) <b>Student_ID</b> not blank<br />
+                2) If <b>Payment_Mode = Bank</b>, then <b>UTR_No</b> must be filled<br />
+                3) Basic validation on amount (must be a number)
+              </p>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="btn btn-secondary" id="bulk_clearBtn">Clear</button>
+            <button type="button" class="btn btn-primary" id="bulk_uploadBtn">
+              <span>Upload Bulk Entries</span> ⬆️
+            </button>
+          </div>
+
+          <div id="bulkStatus" class="status"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby7aCmtimRNFE8lnVGgGeQozn8oh_gMan3SiI1SNaNcYuweRaOUdBk_PecuB_6lbIcZ/exec";
+
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    const tabContents = {
+      singleTab: document.getElementById("singleTab"),
+      bulkTab: document.getElementById("bulkTab"),
+    };
+
+    tabButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        tabButtons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const tabId = btn.getAttribute("data-tab");
+        Object.keys(tabContents).forEach((id) => {
+          if (id === tabId) {
+            tabContents[id].classList.remove("hidden");
+          } else {
+            tabContents[id].classList.add("hidden");
+          }
+        });
+      });
+    });
+
+    const seForm = document.getElementById("singleEntryForm");
+    const sePaymentMode = document.getElementById("se_paymentMode");
+    const seUtr = document.getElementById("se_utrNo");
+    const seStatus = document.getElementById("singleStatus");
+    const seResetBtn = document.getElementById("se_resetBtn");
+
+    function showSingleStatus(type, message) {
+      seStatus.classList.remove("success", "error");
+      seStatus.style.display = "block";
+      if (type === "success") {
+        seStatus.classList.add("success");
+        seStatus.innerHTML = '<span class="label">Success:</span> ' + message;
+      } else {
+        seStatus.classList.add("error");
+        seStatus.innerHTML = '<span class="label">Error:</span> ' + message;
+      }
+    }
+
+    sePaymentMode.addEventListener("change", () => {
+      if (sePaymentMode.value === "Bank") {
+        seUtr.setAttribute("required", "required");
+      } else {
+        seUtr.removeAttribute("required");
+      }
+    });
+
+    seResetBtn.addEventListener("click", () => {
+      seForm.reset();
+      seStatus.style.display = "none";
+      seUtr.removeAttribute("required");
+    });
+
+    seForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (!WEB_APP_URL || !WEB_APP_URL.startsWith("http")) {
+        showSingleStatus("error", "Please update WEB_APP_URL in the HTML before using the tool.");
+        return;
+      }
+
+      if (sePaymentMode.value === "Bank" && !seUtr.value.trim()) {
+        showSingleStatus("error", "For Bank payments, UTR No is mandatory.");
+        return;
+      }
+
+      const payload = {
+        mode: "single",
+        studentId: document.getElementById("se_studentId").value.trim(),
+        studentName: document.getElementById("se_studentName").value.trim(),
+        class: document.getElementById("se_class").value.trim(),
+        receiptDate: document.getElementById("se_receiptDate").value,
+        feeType: document.getElementById("se_feeType").value,
+        amount: document.getElementById("se_amount").value,
+        receiptNo: document.getElementById("se_receiptNo").value.trim(),
+        paymentMode: document.getElementById("se_paymentMode").value,
+        utrNo: document.getElementById("se_utrNo").value.trim(),
+        remarks: document.getElementById("se_remarks").value.trim(),
+      };
+
+      try {
+        showSingleStatus("success", "Submitting... please wait.");
+        const res = await fetch(WEB_APP_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          showSingleStatus("error", "Server error: " + res.status + " – please check code.gs / deployment.");
+          return;
+        }
+
+        const data = await res.json().catch(() => ({}));
+
+        if (data.status === "success") {
+          showSingleStatus("success", data.message || "Single entry saved successfully.");
+          seForm.reset();
+          seUtr.removeAttribute("required");
+        } else if (data.status === "error") {
+          showSingleStatus("error", data.message || "Error from backend (e.g., fees not matching).");
+        } else {
+          showSingleStatus("success", data.message || "Single entry saved successfully (no explicit status in response).");
+          seForm.reset();
+          seUtr.removeAttribute("required");
+        }
+      } catch (err) {
+        showSingleStatus("error", "Network / script error: " + err.message);
+      }
+    });
+
+    const filterClass = document.getElementById("filter_class");
+    const filterStudent = document.getElementById("filter_student");
+    const studentIdInput = document.getElementById("se_studentId");
+    const studentNameInput = document.getElementById("se_studentName");
+    const classInput = document.getElementById("se_class");
+
+    let allStudents = [];
+
+    async function loadStudents() {
+      if (!WEB_APP_URL || !WEB_APP_URL.startsWith("http")) {
+        console.warn("WEB_APP_URL not set – student filters will activate after backend is connected.");
+        return;
+      }
+
+      try {
+        const res = await fetch(WEB_APP_URL + "?mode=students");
+        if (!res.ok) {
+          console.warn("Unable to load students from backend:", res.status);
+          return;
+        }
+        const data = await res.json().catch(() => ({}));
+        if (data.status !== "success" || !Array.isArray(data.students)) {
+          console.warn("Unexpected students response format from backend.");
+          return;
+        }
+
+        allStudents = data.students.map((s) => ({
+          id: s.id || s.studentId || "",
+          name: s.name || s.studentName || "",
+          class: s.class || s.className || "",
+        }));
+
+        populateClassFilter();
+      } catch (err) {
+        console.warn("Error loading students:", err);
+      }
+    }
+
+    function populateClassFilter() {
+      const classes = Array.from(new Set(allStudents.map((s) => s.class).filter((c) => c && c.toString().trim() !== "")))
+        .sort((a, b) => a.toString().localeCompare(b.toString()));
+
+      filterClass.innerHTML = '<option value="">All Classes</option>';
+      classes.forEach((cls) => {
+        const opt = document.createElement("option");
+        opt.value = cls;
+        opt.textContent = cls;
+        filterClass.appendChild(opt);
+      });
+
+      populateStudentFilter();
+    }
+
+    function populateStudentFilter() {
+      const selectedClass = filterClass.value;
+      filterStudent.innerHTML = '<option value="">Select Student</option>';
+
+      const filtered = allStudents.filter((s) => (selectedClass ? s.class === selectedClass : true));
+
+      filtered
+        .sort((a, b) => a.name.toString().localeCompare(b.name.toString()))
+        .forEach((s) => {
+          const opt = document.createElement("option");
+          opt.value = allStudents.indexOf(s);
+          opt.textContent = `${s.name} (${s.id})`;
+          filterStudent.appendChild(opt);
+        });
+    }
+
+    filterClass.addEventListener("change", () => {
+      populateStudentFilter();
+    });
+
+    filterStudent.addEventListener("change", () => {
+      const idx = parseInt(filterStudent.value, 10);
+      if (isNaN(idx) || !allStudents[idx]) return;
+      const s = allStudents[idx];
+      studentIdInput.value = s.id || "";
+      studentNameInput.value = s.name || "";
+      classInput.value = s.class || "";
+    });
+
+    document.addEventListener("DOMContentLoaded", loadStudents);
+
+    const bulkFileInput = document.getElementById("bulkFileInput");
+    const bulkPreview = document.getElementById("bulkPreview");
+    const bulkStatus = document.getElementById("bulkStatus");
+    const bulkUploadBtn = document.getElementById("bulk_uploadBtn");
+    const bulkClearBtn = document.getElementById("bulk_clearBtn");
+    const downloadTemplateBtn = document.getElementById("downloadTemplateBtn");
+
+    let bulkRows = [];
+
+    function showBulkStatus(type, message) {
+      bulkStatus.classList.remove("success", "error");
+      bulkStatus.style.display = "block";
+      if (type === "success") {
+        bulkStatus.classList.add("success");
+        bulkStatus.innerHTML = '<span class="label">Success:</span> ' + message;
+      } else {
+        bulkStatus.classList.add("error");
+        bulkStatus.innerHTML = '<span class="label">Error:</span> ' + message;
+      }
+    }
+
+    function renderBulkPreview() {
+      if (!bulkRows.length) {
+        bulkPreview.innerHTML = "No file selected. Upload an Excel file to see preview here.";
+        return;
+      }
+
+      const maxRows = 20;
+      const rowsToShow = bulkRows.slice(0, maxRows);
+      const headers = Object.keys(rowsToShow[0]);
+
+      let html = "<table><thead><tr>";
+      headers.forEach((h) => {
+        html += "<th>" + h + "</th>";
+      });
+      html += "</tr></thead><tbody>";
+
+      rowsToShow.forEach((row) => {
+        html += "<tr>";
+        headers.forEach((h) => {
+          html += "<td>" + (row[h] ?? "") + "</td>";
+        });
+        html += "</tr>";
+      });
+
+      html += "</tbody></table>";
+
+      if (bulkRows.length > maxRows) {
+        html +=
+          '<div style="margin-top:4px; font-size:11px; color:#6b7280;">Showing first ' +
+          maxRows +
+          " rows only (total rows: " +
+          bulkRows.length +
+          ").</div>";
+      }
+
+      bulkPreview.innerHTML = html;
+    }
+
+    downloadTemplateBtn.addEventListener("click", () => {
+      const headerRow = [
+        "Student_ID",
+        "Student_Name",
+        "Class",
+        "Receipt_Date",
+        "Fee_Type",
+        "Amount",
+        "Receipt_No",
+        "Payment_Mode",
+        "UTR_No",
+        "Remarks",
+      ];
+
+      try {
+        if (typeof XLSX !== "undefined" && XLSX && XLSX.utils) {
+          const ws = XLSX.utils.aoa_to_sheet([headerRow]);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Template");
+          XLSX.writeFile(wb, "Fees_Entry_Template.xlsx");
+        } else {
+          const csv = headerRow.join(",") + "\n";
+          const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = "Fees_Entry_Template.csv";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          alert("XLSX library not available, downloaded CSV template instead.");
+        }
+      } catch (err) {
+        alert("Unable to generate template: " + err.message);
+      }
+    });
+
+    bulkFileInput.addEventListener("change", () => {
+      const file = bulkFileInput.files[0];
+      bulkRows = [];
+      if (!file) {
+        renderBulkPreview();
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+          if (!jsonData.length) {
+            showBulkStatus("error", "Excel sheet is empty.");
+            bulkRows = [];
+          } else {
+            bulkRows = jsonData;
+            bulkStatus.style.display = "none";
+          }
+          renderBulkPreview();
+        } catch (err) {
+          bulkRows = [];
+          renderBulkPreview();
+          showBulkStatus("error", "Unable to read Excel file: " + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    bulkClearBtn.addEventListener("click", () => {
+      bulkFileInput.value = "";
+      bulkRows = [];
+      renderBulkPreview();
+      bulkStatus.style.display = "none";
+    });
+
+    bulkUploadBtn.addEventListener("click", async () => {
+      if (!WEB_APP_URL || !WEB_APP_URL.startsWith("http")) {
+        showBulkStatus("error", "Please update WEB_APP_URL in the HTML before using the tool.");
+        return;
+      }
+
+      if (!bulkRows.length) {
+        showBulkStatus("error", "No data found. Please upload an Excel file first.");
+        return;
+      }
+
+      const errors = [];
+      bulkRows.forEach((row, index) => {
+        const rowNumber = index + 2;
+        const studentId = (row["Student_ID"] || "").toString().trim();
+        const amount = row["Amount"];
+        const paymentMode = (row["Payment_Mode"] || "").toString().trim();
+        const utrNo = (row["UTR_No"] || "").toString().trim();
+
+        if (!studentId) {
+          errors.push("Row " + rowNumber + ": Student_ID is blank.");
+        }
+
+        if (amount === undefined || amount === null || amount === "") {
+          errors.push("Row " + rowNumber + ": Amount is blank.");
+        } else if (isNaN(Number(amount))) {
+          errors.push("Row " + rowNumber + ": Amount is not a valid number.");
+        }
+
+        if (paymentMode === "Bank" && !utrNo) {
+          errors.push("Row " + rowNumber + ": Payment_Mode is Bank but UTR_No is blank.");
+        }
+      });
+
+      if (errors.length) {
+        showBulkStatus(
+          "error",
+          "Fix the following issues before upload:<br>" +
+            errors.slice(0, 8).join("<br>") +
+            (errors.length > 8 ? "<br>... and more (" + (errors.length - 8) + " errors)." : "")
+        );
+        return;
+      }
+
+      const payload = {
+        mode: "bulk",
+        rows: bulkRows,
+      };
+
+      try {
+        showBulkStatus("success", "Uploading... please wait.");
+        const res = await fetch(WEB_APP_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          showBulkStatus("error", "Server error: " + res.status + " – please check code.gs / deployment.");
+          return;
+        }
+
+        const data = await res.json().catch(() => ({}));
+
+        if (data.status === "success") {
+          showBulkStatus("success", data.message || "Bulk entries uploaded successfully.");
+        } else if (data.status === "error") {
+          showBulkStatus(
+            "error",
+            data.message || "Error from backend (e.g., some students fees not matching fixed structure)."
+          );
+        } else {
+          showBulkStatus(
+            "success",
+            data.message || "Bulk entries uploaded successfully (no explicit status in response)."
+          );
+        }
+      } catch (err) {
+        showBulkStatus("error", "Network / script error: " + err.message);
+      }
+    });
+  </script>
+</body>
+</html>
