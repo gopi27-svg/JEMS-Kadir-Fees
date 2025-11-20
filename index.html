@@ -2,407 +2,355 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>School Fees Entry Tool</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Optional: Google Font -->
+  <title>School Fees Entry Tool</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <!-- Excel Parser (SheetJS) for Bulk Upload + Template Download -->
+  <!-- SheetJS for Excel read/write -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
+  <!-- Chart.js for dashboard charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
-      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
-
     body {
       margin: 0;
-      padding: 0;
-      background: #f3f5fb;
-      color: #222;
+      padding: 24px;
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f3f4f6;
+      color: #111827;
     }
-
-    .container {
-      max-width: 1100px;
-      margin: 30px auto;
-      padding: 20px;
+    .page {
+      max-width: 1120px;
+      margin: 0 auto;
     }
-
     .card {
       background: #ffffff;
-      border-radius: 14px;
-      padding: 20px 24px;
-      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+      border-radius: 24px;
+      padding: 24px 28px 28px;
+      box-shadow: 0 18px 45px rgba(15,23,42,0.12);
     }
-
-    .header {
+    .card-header {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-
-    .header-left {
-      display: flex;
       align-items: center;
-      gap: 14px;
+      margin-bottom: 16px;
+      gap: 12px;
     }
-
-    .logo {
-      width: 52px;
-      height: 52px;
-      border-radius: 12px;
-      background: #e5e7eb;
+    .logo-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #1d4ed8, #3b82f6);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
-      font-size: 22px;
-      color: #111827;
-      overflow: hidden;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 20px;
+      flex-shrink: 0;
     }
-
-    .logo img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
     .title-block h1 {
       margin: 0;
       font-size: 22px;
       font-weight: 600;
-      color: #111827;
+      letter-spacing: 0.01em;
     }
-
     .title-block p {
-      margin: 2px 0 0 0;
+      margin: 2px 0 0;
       font-size: 13px;
       color: #6b7280;
     }
-
-    .badge {
-      font-size: 11px;
-      padding: 5px 10px;
+    .pill {
       border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 11px;
       background: #eff6ff;
       color: #1d4ed8;
       border: 1px solid #bfdbfe;
-      font-weight: 500;
-    }
-
-    hr {
-      border: none;
-      border-top: 1px solid #e5e7eb;
-      margin: 16px 0 12px 0;
+      white-space: nowrap;
     }
 
     .tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 18px;
-      flex-wrap: wrap;
+      display: inline-flex;
+      padding: 4px;
+      border-radius: 999px;
+      background: #f3f4f6;
+      gap: 4px;
+      margin-bottom: 14px;
+      margin-top: 8px;
     }
-
     .tab-btn {
-      border: 1px solid #e5e7eb;
-      background: #f9fafb;
-      padding: 8px 16px;
+      border: none;
+      background: transparent;
+      padding: 6px 16px;
       border-radius: 999px;
       font-size: 13px;
-      cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.18s ease;
+      cursor: pointer;
+      color: #4b5563;
+      transition: all 0.2s ease;
     }
-
-    .tab-btn span.icon {
-      font-size: 14px;
+    .tab-btn .icon {
+      font-size: 15px;
     }
-
     .tab-btn.active {
-      background: #1d4ed8;
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
       color: #ffffff;
-      border-color: #1d4ed8;
-      box-shadow: 0 5px 14px rgba(37, 99, 235, 0.3);
+      box-shadow: 0 8px 18px rgba(37,99,235,0.35);
     }
 
-    .tab-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 10px rgba(148, 163, 184, 0.4);
+    .tab-content {
+      margin-top: 10px;
+    }
+    .hidden {
+      display: none;
     }
 
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin: 4px 0 6px;
+    }
     .info-text {
       font-size: 12px;
       color: #6b7280;
-      margin-bottom: 14px;
+      margin-bottom: 10px;
     }
 
-    .info-text b {
-      color: #111827;
-    }
-
-    .form-grid {
+    .grid-two {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 14px 18px;
-      margin-bottom: 12px;
+      margin-top: 10px;
     }
-
     .field {
       display: flex;
       flex-direction: column;
       gap: 4px;
+      font-size: 12px;
     }
-
     .field label {
-      font-size: 13px;
       font-weight: 500;
       color: #374151;
+      font-size: 12px;
     }
-
-    .field label .required {
-      color: #dc2626;
-    }
-
     .field input,
     .field select,
     .field textarea {
       border-radius: 10px;
       border: 1px solid #d1d5db;
-      padding: 7px 10px;
+      padding: 7px 9px;
       font-size: 13px;
+      font-family: inherit;
       outline: none;
-      background: #f9fafb;
-      transition: all 0.15s ease;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      background: #ffffff;
     }
-
     .field input:focus,
     .field select:focus,
     .field textarea:focus {
       border-color: #2563eb;
-      background: #ffffff;
-      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.15);
+      box-shadow: 0 0 0 1px rgba(37,99,235,0.18);
     }
-
     .field textarea {
       resize: vertical;
-      min-height: 60px;
+      min-height: 70px;
     }
-
+    .required {
+      color: #ef4444;
+      margin-left: 2px;
+    }
     .small-hint {
       font-size: 11px;
       color: #9ca3af;
     }
+    .tag-list {
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 10px;
+    }
+    .tag {
+      border-radius: 999px;
+      background: #f9fafb;
+      border: 1px dashed #e5e7eb;
+      padding: 4px 8px;
+      color: #6b7280;
+    }
 
     .actions {
       display: flex;
-      align-items: center;
       justify-content: flex-end;
-      gap: 10px;
-      margin-top: 10px;
+      gap: 8px;
+      margin-top: 14px;
     }
-
     .btn {
       border-radius: 999px;
-      padding: 8px 18px;
       border: none;
+      padding: 7px 18px;
       font-size: 13px;
       cursor: pointer;
+      font-family: inherit;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.18s ease;
-      font-weight: 500;
+      white-space: nowrap;
     }
-
     .btn-primary {
-      background: #1d4ed8;
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
       color: #ffffff;
-      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.4);
+      box-shadow: 0 10px 20px rgba(37,99,235,0.35);
     }
-
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.6);
-    }
-
     .btn-secondary {
-      background: #f9fafb;
-      color: #111827;
+      background: #f3f4f6;
+      color: #374151;
       border: 1px solid #e5e7eb;
-    }
-
-    .btn-secondary:hover {
-      background: #e5e7eb;
     }
 
     .status {
       margin-top: 10px;
-      font-size: 13px;
       padding: 8px 10px;
       border-radius: 10px;
+      font-size: 12px;
       display: none;
     }
-
+    .status.error {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
     .status.success {
       background: #ecfdf3;
       color: #166534;
       border: 1px solid #bbf7d0;
     }
 
-    .status.error {
-      background: #fef2f2;
-      color: #b91c1c;
-      border: 1px solid #fecaca;
-    }
-
-    .status span.label {
-      font-weight: 600;
-      margin-right: 4px;
-    }
-
-    .hidden {
-      display: none;
-    }
-
     .bulk-section {
-      margin-top: 8px;
-    }
-
-    .bulk-layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.1fr);
-      gap: 18px;
-    }
-
-    @media (max-width: 900px) {
-      .bulk-layout {
-        grid-template-columns: minmax(0, 1fr);
-      }
+      margin-top: 6px;
     }
 
     .template-box {
-      background: #f9fafb;
-      border-radius: 12px;
+      border-radius: 14px;
       border: 1px dashed #d1d5db;
       padding: 12px 14px;
-      font-size: 12px;
-      color: #4b5563;
+      background: #f9fafb;
+      margin-bottom: 10px;
+    }
+    .template-title {
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 4px;
     }
 
     .preview-box {
-      background: #f9fafb;
-      border-radius: 12px;
-      border: 1px solid #e5e7eb;
+      margin-top: 14px;
       padding: 10px;
-      max-height: 280px;
+      border-radius: 14px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      font-size: 11px;
+      max-height: 260px;
       overflow: auto;
+    }
+    .preview-box table {
+      border-collapse: collapse;
+      width: 100%;
       font-size: 11px;
     }
-
-    .preview-box table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
     .preview-box th,
     .preview-box td {
-      padding: 4px 6px;
       border: 1px solid #e5e7eb;
-      text-align: left;
+      padding: 4px 6px;
       white-space: nowrap;
     }
-
     .preview-box th {
-      background: #e5e7eb;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      border: 1px solid #e5e7eb;
-      color: #4b5563;
-      gap: 4px;
-      margin-right: 4px;
-      margin-top: 4px;
-    }
-
-    .tag span.dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 999px;
-      background: #22c55e;
-    }
-
-    .tag.red span.dot {
-      background: #ef4444;
-    }
-
-    .tag.blue span.dot {
-      background: #3b82f6;
+      background: #eff6ff;
+      font-weight: 600;
+      text-align: left;
     }
 
     .subtle-note {
       font-size: 11px;
       color: #9ca3af;
-      margin-top: 4px;
+      margin-top: 6px;
     }
 
-    .pill-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      margin-top: 4px;
-    }
-
-    .filter-box {
-      background: #f9fafb;
-      border-radius: 12px;
-      border: 1px solid #e5e7eb;
-      padding: 10px 14px;
-      margin-bottom: 14px;
-    }
-
-    .filter-grid {
+    .dashboard-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 10px 16px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .dashboard-card {
+      background: #f9fafb;
+      border-radius: 16px;
+      padding: 14px 16px;
+      box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+    }
+    .dashboard-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .dashboard-table table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    .dashboard-table th,
+    .dashboard-table td {
+      border: 1px solid #e5e7eb;
+      padding: 4px 6px;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .dashboard-table th:first-child,
+    .dashboard-table td:first-child {
+      text-align: left;
+    }
+    .chart-wrapper {
+      margin-top: 10px;
     }
 
-    .filter-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: #4b5563;
-      margin-bottom: 4px;
+    @media (max-width: 640px) {
+      body {
+        padding: 12px;
+      }
+      .card {
+        padding: 16px 14px 18px;
+        border-radius: 18px;
+      }
+      .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+      }
+      .btn {
+        justify-content: center;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="page">
     <div class="card">
-      <div class="header">
-        <div class="header-left">
-          <div class="logo">
-            J
-          </div>
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="logo-circle">J</div>
           <div class="title-block">
             <h1>School Fees Entry Tool</h1>
-            <p>Manage Opening Balance, Tuition Fees_25-26 & Bus Fees_25-26 with single and bulk payments.</p>
+            <p>Manage Opening Balance, Tuition Fees_25-26 &amp; Bus Fees_25-26 with single and bulk payments.</p>
           </div>
         </div>
-        <div class="badge">703 Students • Student ID mandatory</div>
+        <div class="pill" id="studentCountPill">Students • Student ID mandatory</div>
       </div>
-
-      <hr />
 
       <div class="tabs">
         <button class="tab-btn active" data-tab="singleTab">
@@ -411,168 +359,133 @@
         <button class="tab-btn" data-tab="bulkTab">
           <span class="icon">📊</span> Bulk Excel Upload
         </button>
+        <button class="tab-btn" data-tab="dashboardTab">
+          <span class="icon">📈</span> Dashboard
+        </button>
       </div>
 
-      <!-- Single Entry Section -->
+      <!-- Single Entry -->
       <div id="singleTab" class="tab-content">
         <p class="info-text">
-          <b>Single Entry</b> – Use this for one student at a time. Student ID is compulsory.  
-          Fee type must match the master fee structure in your Google Sheet. The backend (code.gs)
-          will validate and show error if total fee collection goes beyond fixed fees.
+          <b>Single Entry</b> – Use this for one student at a time. Student ID is compulsory. Fee type must match the
+          master fee structure in your Google Sheet. The backend will validate and show error if total fee collection goes
+          beyond fixed fees.
         </p>
 
-        <!-- FILTERS: Class & Student Name -->
-        <div class="filter-box">
-          <div class="filter-title">Search Student</div>
-          <div class="filter-grid">
-            <div class="field">
-              <label>Class Filter</label>
-              <select id="filter_class">
-                <option value="">All Classes</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Student Name Filter</label>
-              <select id="filter_student">
-                <option value="">Select Student</option>
-              </select>
-              <div class="small-hint">
-                On selecting a student, Student ID / Name / Class in the form will auto-fill.
-              </div>
-            </div>
+        <div class="section-title">Search Student</div>
+        <div class="grid-two">
+          <div class="field">
+            <label>Class Filter</label>
+            <select id="searchClassFilter">
+              <option value="">All Classes</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Student Name Filter</label>
+            <select id="searchStudentFilter">
+              <option value="">Select class first</option>
+            </select>
+            <div class="small-hint">On selecting a student, Student ID / Name / Class in the form will auto-fill.</div>
           </div>
         </div>
 
-        <form id="singleEntryForm">
-          <div class="form-grid">
-            <div class="field">
-              <label>Student ID <span class="required">*</span></label>
-              <input type="text" id="se_studentId" name="studentId" required placeholder="E.g., S1234" />
-              <div class="small-hint">Unique ID as per your master sheet</div>
-            </div>
-
-            <div class="field">
-              <label>Student Name</label>
-              <input type="text" id="se_studentName" name="studentName" placeholder="E.g., Rahul Kumar" />
-            </div>
-
-            <div class="field">
-              <label>Class</label>
-              <input type="text" id="se_class" name="class" placeholder="E.g., Grade 5 A" />
-            </div>
-
-            <div class="field">
-              <label>Receipt Date</label>
-              <input type="date" id="se_receiptDate" name="receiptDate" />
-            </div>
-
-            <div class="field">
-              <label>Fee Type <span class="required">*</span></label>
-              <select id="se_feeType" name="feeType" required>
-                <option value="">-- Select Fee Type --</option>
-                <option value="Opening Balance">Opening Balance</option>
-                <option value="Tuition Fees_25-26">Tuition Fees_25-26</option>
-                <option value="Bus Fees_25-26">Bus Fees_25-26</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label>Amount (₹) <span class="required">*</span></label>
-              <input type="number" id="se_amount" name="amount" min="0" step="0.01" required placeholder="E.g., 15000" />
-            </div>
-
-            <div class="field">
-              <label>Receipt No <span class="required">*</span></label>
-              <input type="text" id="se_receiptNo" name="receiptNo" required placeholder="Receipt number" />
-            </div>
-
-            <div class="field">
-              <label>Payment Mode <span class="required">*</span></label>
-              <select id="se_paymentMode" name="paymentMode" required>
-                <option value="">-- Select --</option>
-                <option value="Cash">Cash</option>
-                <option value="Bank">Bank</option>
-              </select>
-              <div class="small-hint">If Bank is selected, UTR No is mandatory.</div>
-            </div>
-
-            <div class="field">
-              <label>UTR No (for Bank payments)</label>
-              <input type="text" id="se_utrNo" name="utrNo" placeholder="Enter UTR No if Payment Mode is Bank" />
-            </div>
-
-            <div class="field">
-              <label>Remarks</label>
-              <textarea id="se_remarks" name="remarks" placeholder="Optional notes"></textarea>
-            </div>
+        <div class="section-title" style="margin-top:14px;">Entry Details</div>
+        <div class="grid-two">
+          <div class="field">
+            <label>Student ID<span class="required">*</span></label>
+            <input id="studentId" type="text" placeholder="Unique ID as per master sheet" />
           </div>
-
-          <div class="pill-group">
-            <div class="tag">
-              <span class="dot"></span> Tuition & Bus fees checked in backend
-            </div>
-            <div class="tag red">
-              <span class="dot"></span> If total collection > fixed fees → error
-            </div>
-            <div class="tag blue">
-              <span class="dot"></span> Student ID is compulsory
-            </div>
+          <div class="field">
+            <label>Student Name</label>
+            <input id="studentName" type="text" placeholder="Student name" />
           </div>
-
-          <div class="actions">
-            <button type="button" class="btn btn-secondary" id="se_resetBtn">Clear</button>
-            <button type="submit" class="btn btn-primary">
-              <span>Save Single Entry</span> 💾
-            </button>
+          <div class="field">
+            <label>Class</label>
+            <input id="studentClass" type="text" placeholder="e.g. 1st Std" />
           </div>
+          <div class="field">
+            <label>Receipt Date</label>
+            <input id="receiptDate" type="date" />
+          </div>
+          <div class="field">
+            <label>Fee Type<span class="required">*</span></label>
+            <select id="feeType">
+              <option value="">Select Fee Type</option>
+              <option value="Opening Balance">Opening Balance</option>
+              <option value="Tuition Fees_25-26">Tuition Fees_25-26</option>
+              <option value="Bus Fees_25-26">Bus Fees_25-26</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Amount (₹)<span class="required">*</span></label>
+            <input id="amount" type="number" min="0" step="0.01" placeholder="Amount in ₹" />
+          </div>
+          <div class="field">
+            <label>Receipt No<span class="required">*</span></label>
+            <input id="receiptNo" type="text" placeholder="Receipt number" />
+          </div>
+          <div class="field">
+            <label>Payment Mode<span class="required">*</span></label>
+            <select id="paymentMode">
+              <option value="">Select Payment Mode</option>
+              <option value="Cash">Cash</option>
+              <option value="Bank">Bank</option>
+            </select>
+            <div class="small-hint">If Bank is selected, UTR No is mandatory.</div>
+          </div>
+          <div class="field">
+            <label>UTR No (for Bank payments)</label>
+            <input id="utrNo" type="text" placeholder="Enter UTR No if Payment Mode is Bank" />
+          </div>
+          <div class="field">
+            <label>Remarks</label>
+            <textarea id="remarks" placeholder="Optional notes"></textarea>
+          </div>
+        </div>
 
-          <div id="singleStatus" class="status"></div>
-        </form>
+        <div class="tag-list">
+          <div class="tag">Tuition &amp; Bus fees checked in backend</div>
+          <div class="tag">If total collection &gt; fixed fees → error</div>
+          <div class="tag">Student ID is compulsory</div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-secondary" id="single_clearBtn">Clear</button>
+          <button type="button" class="btn btn-primary" id="single_saveBtn">
+            <span>Save Single Entry</span> 🇮🇳
+          </button>
+        </div>
+
+        <div id="singleStatus" class="status"></div>
       </div>
 
       <!-- Bulk Upload Section -->
       <div id="bulkTab" class="tab-content hidden">
         <p class="info-text">
-          <b>Bulk Excel Upload</b> – Upload multiple records at once.  
-          Use the Excel template below. For bank payments, UTR No is mandatory.
+          <b>Bulk Excel Upload</b> – Upload multiple records at once. Use the Excel template below. For bank payments, UTR No is mandatory.
           Backend will validate against fixed fee structure for each student.
         </p>
 
         <div class="bulk-section">
-          <div class="bulk-layout">
-            <div>
-              <div class="template-box">
-                <div class="template-title">Download Excel Template</div>
-                <p style="margin:4px 0 8px 0;">
-                  Click below to download the template file. It already contains all required headers  
-                  (Student_ID, Student_Name, Class, Receipt_Date, Fee_Type, Amount, Receipt_No, Payment_Mode, UTR_No, Remarks).
-                </p>
-                <button type="button" class="btn btn-secondary" id="downloadTemplateBtn">
-                  Download Excel Template ⬇️
-                </button>
-              </div>
+          <div class="template-box">
+            <div class="template-title">Download Excel Template</div>
+            <p style="margin:4px 0 8px 0;">
+              Click below to download the template file. It already contains all required headers and a pre-filled list of all
+              students from your master sheet. Fee_Type allowed values: Opening Balance / Tuition Fees_25-26 / Bus Fees_25-26.
+              Payment_Mode allowed values: Cash / Bank.
+            </p>
+            <button type="button" class="btn btn-secondary" id="downloadTemplateBtn">
+              Download Excel Template ⬇️
+            </button>
+          </div>
 
-              <div style="margin-top: 14px;">
-                <div class="field">
-                  <label>Upload Excel File (.xlsx) <span class="required">*</span></label>
-                  <input type="file" id="bulkFileInput" accept=".xlsx" />
-                  <div class="small-hint">
-                    After selecting file, a preview of first few rows will appear on the right.
-                  </div>
-                </div>
+          <div style="margin-top: 14px;">
+            <div class="field">
+              <label>Upload Excel File (.xlsx)<span class="required">*</span></label>
+              <input type="file" id="bulkFileInput" accept=".xlsx" />
+              <div class="small-hint">
+                After selecting file, a preview of first few rows will appear below.
               </div>
-            </div>
-
-            <div>
-              <div class="preview-box" id="bulkPreview">
-                No file selected. Upload an Excel file to see preview here.
-              </div>
-              <p class="subtle-note">
-                Note: Before upload, the tool will check:<br />
-                1) <b>Student_ID</b> not blank<br />
-                2) If <b>Payment_Mode = Bank</b>, then <b>UTR_No</b> must be filled<br />
-                3) Basic validation on amount (must be a number)
-              </p>
             </div>
           </div>
 
@@ -581,29 +494,122 @@
             <button type="button" class="btn btn-primary" id="bulk_uploadBtn">
               <span>Upload Bulk Entries</span> ⬆️
             </button>
+            <button type="button" class="btn btn-secondary" id="downloadErrorsBtn" style="display:none;">
+              Download Errors ⬇️
+            </button>
           </div>
 
+          <div class="preview-box" id="bulkPreview">
+            No file selected. Upload an Excel file to see preview here.
+          </div>
+          <p class="subtle-note">
+            Note: Before upload, the tool will check:<br />
+            1) <b>Student_ID</b> not blank<br />
+            2) If <b>Payment_Mode = Bank</b>, then <b>UTR_No</b> must be filled<br />
+            3) Basic validation on amount (must be a number)
+          </p>
+
           <div id="bulkStatus" class="status"></div>
+        </div>
+      </div>
+
+      <!-- Dashboard Section -->
+      <div id="dashboardTab" class="tab-content hidden">
+        <p class="info-text">
+          <b>Dashboard</b> – View class-wise and student-wise fee summary, collections, dues, and month-wise cash/bank collections.
+        </p>
+
+        <div class="actions" style="justify-content:flex-start; gap:8px;">
+          <button type="button" class="btn btn-secondary" id="dash_refreshBtn">
+            Refresh Dashboard 🔄
+          </button>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="dashboard-card">
+            <div class="dashboard-title">Class-wise Summary</div>
+            <div id="classSummaryTable" class="dashboard-table">
+              Click "Refresh Dashboard" to load data.
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="classChart" height="130"></canvas>
+            </div>
+          </div>
+
+          <div class="dashboard-card">
+            <div class="dashboard-title">Student-wise Summary</div>
+            <div class="field" style="max-width:240px;">
+              <label>Filter by Class</label>
+              <select id="dash_classFilter">
+                <option value="">All Classes</option>
+              </select>
+            </div>
+            <div id="studentSummaryTable" class="dashboard-table" style="margin-top:8px;">
+              Click "Refresh Dashboard" to load data.
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-card" style="margin-top:16px;">
+          <div class="dashboard-title">Month-wise Collection (Cash vs Bank)</div>
+          <div id="monthSummaryTable" class="dashboard-table">
+            Click "Refresh Dashboard" to load data.
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="monthChart" height="120"></canvas>
+          </div>
+        </div>
+
+        <div class="dashboard-card" style="margin-top:16px;">
+          <div class="dashboard-title">Fee Dues Report (Pending Only)</div>
+          <div id="duesTable" class="dashboard-table">
+            Click "Refresh Dashboard" to load data.
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
+    // ===== CONFIG =====
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby7aCmtimRNFE8lnVGgGeQozn8oh_gMan3SiI1SNaNcYuweRaOUdBk_PecuB_6lbIcZ/exec";
 
+    const ALLOWED_FEE_TYPES = ["Opening Balance","Tuition Fees_25-26","Bus Fees_25-26"];
+    const ALLOWED_PAYMENT_MODES = ["Cash","Bank"];
+
+    let studentsData = [];
+    let bulkRows = [];
+    let bulkRowErrors = [];
+    let bulkErrorsForDownload = [];
+
+    let dashboardData = null;
+    let dashboardLoaded = false;
+    let classChartInstance = null;
+    let monthChartInstance = null;
+
+    function fmtAmount(n) {
+      if (n === null || n === undefined || n === "") return "";
+      const num = Number(n);
+      if (isNaN(num)) return String(n);
+      return num.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+    }
+
+    // ===== Tabs =====
     const tabButtons = document.querySelectorAll(".tab-btn");
     const tabContents = {
       singleTab: document.getElementById("singleTab"),
       bulkTab: document.getElementById("bulkTab"),
+      dashboardTab: document.getElementById("dashboardTab"),
     };
 
     tabButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
         tabButtons.forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
-
         const tabId = btn.getAttribute("data-tab");
+        if (tabId === "dashboardTab") {
+          loadDashboard(false);
+        }
         Object.keys(tabContents).forEach((id) => {
           if (id === tabId) {
             tabContents[id].classList.remove("hidden");
@@ -614,278 +620,277 @@
       });
     });
 
-    const seForm = document.getElementById("singleEntryForm");
-    const sePaymentMode = document.getElementById("se_paymentMode");
-    const seUtr = document.getElementById("se_utrNo");
-    const seStatus = document.getElementById("singleStatus");
-    const seResetBtn = document.getElementById("se_resetBtn");
+    // ===== Single Entry Logic =====
+    const searchClassFilter = document.getElementById("searchClassFilter");
+    const searchStudentFilter = document.getElementById("searchStudentFilter");
+    const studentIdInput = document.getElementById("studentId");
+    const studentNameInput = document.getElementById("studentName");
+    const studentClassInput = document.getElementById("studentClass");
+    const receiptDateInput = document.getElementById("receiptDate");
+    const feeTypeSelect = document.getElementById("feeType");
+    const amountInput = document.getElementById("amount");
+    const receiptNoInput = document.getElementById("receiptNo");
+    const paymentModeSelect = document.getElementById("paymentMode");
+    const utrNoInput = document.getElementById("utrNo");
+    const remarksInput = document.getElementById("remarks");
+    const singleStatus = document.getElementById("singleStatus");
 
     function showSingleStatus(type, message) {
-      seStatus.classList.remove("success", "error");
-      seStatus.style.display = "block";
-      if (type === "success") {
-        seStatus.classList.add("success");
-        seStatus.innerHTML = '<span class="label">Success:</span> ' + message;
-      } else {
-        seStatus.classList.add("error");
-        seStatus.innerHTML = '<span class="label">Error:</span> ' + message;
-      }
+      singleStatus.className = "status " + (type === "error" ? "error" : "success");
+      singleStatus.innerHTML = message;
+      singleStatus.style.display = "block";
     }
 
-    sePaymentMode.addEventListener("change", () => {
-      if (sePaymentMode.value === "Bank") {
-        seUtr.setAttribute("required", "required");
+    function clearSingleForm() {
+      searchClassFilter.value = "";
+      searchStudentFilter.innerHTML = '<option value="">Select class first</option>';
+      studentIdInput.value = "";
+      studentNameInput.value = "";
+      studentClassInput.value = "";
+      receiptDateInput.value = "";
+      feeTypeSelect.value = "";
+      amountInput.value = "";
+      receiptNoInput.value = "";
+      paymentModeSelect.value = "";
+      utrNoInput.value = "";
+      remarksInput.value = "";
+      singleStatus.style.display = "none";
+    }
+
+    document.getElementById("single_clearBtn").addEventListener("click", clearSingleForm);
+
+    paymentModeSelect.addEventListener("change", () => {
+      if (paymentModeSelect.value === "Bank") {
+        utrNoInput.placeholder = "UTR No is mandatory for Bank payments";
       } else {
-        seUtr.removeAttribute("required");
+        utrNoInput.placeholder = "Enter UTR No if Payment Mode is Bank";
       }
     });
 
-    seResetBtn.addEventListener("click", () => {
-      seForm.reset();
-      seStatus.style.display = "none";
-      seUtr.removeAttribute("required");
+    searchClassFilter.addEventListener("change", () => {
+      const cls = searchClassFilter.value;
+      populateStudentFilter(cls);
     });
 
-    seForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
+    searchStudentFilter.addEventListener("change", () => {
+      const val = searchStudentFilter.value; // studentId
+      if (!val) return;
+      const stu = studentsData.find((s) => s.studentId === val);
+      if (!stu) return;
+      studentIdInput.value = stu.studentId;
+      studentNameInput.value = stu.name || "";
+      studentClassInput.value = stu.class || "";
+    });
 
-      if (!WEB_APP_URL || !WEB_APP_URL.startsWith("http")) {
-        showSingleStatus("error", "Please update WEB_APP_URL in the HTML before using the tool.");
+    document.getElementById("single_saveBtn").addEventListener("click", async () => {
+      const studentId = (studentIdInput.value || "").trim();
+      const studentName = (studentNameInput.value || "").trim();
+      const className = (studentClassInput.value || "").trim();
+      let dateVal = receiptDateInput.value; // yyyy-mm-dd
+      let receiptDateStr = "";
+      if (dateVal) {
+        const parts = dateVal.split("-");
+        if (parts.length === 3) {
+          const yyyy = parts[0];
+          const mm = parts[1];
+          const dd = parts[2];
+          receiptDateStr = dd + "-" + mm + "-" + yyyy; // dd-mm-yyyy
+        } else {
+          receiptDateStr = dateVal;
+        }
+      }
+      const feeType = feeTypeSelect.value;
+      const amount = Number(amountInput.value || 0);
+      const receiptNo = (receiptNoInput.value || "").trim();
+      const paymentMode = paymentModeSelect.value;
+      const utrNo = (utrNoInput.value || "").trim();
+      const remarks = (remarksInput.value || "").trim();
+
+      if (!studentId) {
+        showSingleStatus("error", "Student ID is required.");
         return;
       }
-
-      if (sePaymentMode.value === "Bank" && !seUtr.value.trim()) {
+      if (!feeType) {
+        showSingleStatus("error", "Fee Type is required.");
+        return;
+      }
+      if (ALLOWED_FEE_TYPES.indexOf(feeType) === -1) {
+        showSingleStatus("error", "Invalid Fee Type. Allowed: " + ALLOWED_FEE_TYPES.join(" / "));
+        return;
+      }
+      if (!amount || isNaN(amount) || amount <= 0) {
+        showSingleStatus("error", "Amount must be a positive number.");
+        return;
+      }
+      if (!receiptNo) {
+        showSingleStatus("error", "Receipt No is required.");
+        return;
+      }
+      if (!paymentMode) {
+        showSingleStatus("error", "Payment Mode is required.");
+        return;
+      }
+      if (ALLOWED_PAYMENT_MODES.indexOf(paymentMode) === -1) {
+        showSingleStatus("error", "Invalid Payment Mode. Allowed: Cash / Bank.");
+        return;
+      }
+      if (paymentMode === "Bank" && !utrNo) {
         showSingleStatus("error", "For Bank payments, UTR No is mandatory.");
         return;
       }
 
       const payload = {
         mode: "single",
-        studentId: document.getElementById("se_studentId").value.trim(),
-        studentName: document.getElementById("se_studentName").value.trim(),
-        class: document.getElementById("se_class").value.trim(),
-        receiptDate: document.getElementById("se_receiptDate").value,
-        feeType: document.getElementById("se_feeType").value,
-        amount: document.getElementById("se_amount").value,
-        receiptNo: document.getElementById("se_receiptNo").value.trim(),
-        paymentMode: document.getElementById("se_paymentMode").value,
-        utrNo: document.getElementById("se_utrNo").value.trim(),
-        remarks: document.getElementById("se_remarks").value.trim(),
+        studentId,
+        studentName,
+        class: className,
+        receiptDate: receiptDateStr,
+        feeType,
+        amount,
+        receiptNo,
+        paymentMode,
+        utrNo,
+        remarks,
       };
 
       try {
-        showSingleStatus("success", "Submitting... please wait.");
+        showSingleStatus("success", "Saving... please wait.");
         const res = await fetch(WEB_APP_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-
         if (!res.ok) {
-          showSingleStatus("error", "Server error: " + res.status + " – please check code.gs / deployment.");
+          showSingleStatus("error", "Server error: " + res.status + " – please check backend deployment.");
           return;
         }
-
         const data = await res.json().catch(() => ({}));
-
         if (data.status === "success") {
           showSingleStatus("success", data.message || "Single entry saved successfully.");
-          seForm.reset();
-          seUtr.removeAttribute("required");
-        } else if (data.status === "error") {
-          showSingleStatus("error", data.message || "Error from backend (e.g., fees not matching).");
         } else {
-          showSingleStatus("success", data.message || "Single entry saved successfully (no explicit status in response).");
-          seForm.reset();
-          seUtr.removeAttribute("required");
+          showSingleStatus("error", data.message || "Error while saving. Please check backend.");
         }
       } catch (err) {
         showSingleStatus("error", "Network / script error: " + err.message);
       }
     });
 
-    const filterClass = document.getElementById("filter_class");
-    const filterStudent = document.getElementById("filter_student");
-    const studentIdInput = document.getElementById("se_studentId");
-    const studentNameInput = document.getElementById("se_studentName");
-    const classInput = document.getElementById("se_class");
-
-    let allStudents = [];
-
-    async function loadStudents() {
-      if (!WEB_APP_URL || !WEB_APP_URL.startsWith("http")) {
-        console.warn("WEB_APP_URL not set – student filters will activate after backend is connected.");
-        return;
-      }
-
-      try {
-        const res = await fetch(WEB_APP_URL + "?mode=students");
-        if (!res.ok) {
-          console.warn("Unable to load students from backend:", res.status);
-          return;
-        }
-        const data = await res.json().catch(() => ({}));
-        if (data.status !== "success" || !Array.isArray(data.students)) {
-          console.warn("Unexpected students response format from backend.");
-          return;
-        }
-
-        allStudents = data.students.map((s) => ({
-          id: s.id || s.studentId || "",
-          name: s.name || s.studentName || "",
-          class: s.class || s.className || "",
-        }));
-
-        populateClassFilter();
-      } catch (err) {
-        console.warn("Error loading students:", err);
-      }
-    }
-
-    function populateClassFilter() {
-      const classes = Array.from(new Set(allStudents.map((s) => s.class).filter((c) => c && c.toString().trim() !== "")))
-        .sort((a, b) => a.toString().localeCompare(b.toString()));
-
-      filterClass.innerHTML = '<option value="">All Classes</option>';
-      classes.forEach((cls) => {
-        const opt = document.createElement("option");
-        opt.value = cls;
-        opt.textContent = cls;
-        filterClass.appendChild(opt);
-      });
-
-      populateStudentFilter();
-    }
-
-    function populateStudentFilter() {
-      const selectedClass = filterClass.value;
-      filterStudent.innerHTML = '<option value="">Select Student</option>';
-
-      const filtered = allStudents.filter((s) => (selectedClass ? s.class === selectedClass : true));
-
-      filtered
-        .sort((a, b) => a.name.toString().localeCompare(b.name.toString()))
-        .forEach((s) => {
-          const opt = document.createElement("option");
-          opt.value = allStudents.indexOf(s);
-          opt.textContent = `${s.name} (${s.id})`;
-          filterStudent.appendChild(opt);
-        });
-    }
-
-    filterClass.addEventListener("change", () => {
-      populateStudentFilter();
-    });
-
-    filterStudent.addEventListener("change", () => {
-      const idx = parseInt(filterStudent.value, 10);
-      if (isNaN(idx) || !allStudents[idx]) return;
-      const s = allStudents[idx];
-      studentIdInput.value = s.id || "";
-      studentNameInput.value = s.name || "";
-      classInput.value = s.class || "";
-    });
-
-    document.addEventListener("DOMContentLoaded", loadStudents);
-
+    // ===== Bulk Upload Logic =====
     const bulkFileInput = document.getElementById("bulkFileInput");
     const bulkPreview = document.getElementById("bulkPreview");
     const bulkStatus = document.getElementById("bulkStatus");
-    const bulkUploadBtn = document.getElementById("bulk_uploadBtn");
-    const bulkClearBtn = document.getElementById("bulk_clearBtn");
-    const downloadTemplateBtn = document.getElementById("downloadTemplateBtn");
-
-    let bulkRows = [];
 
     function showBulkStatus(type, message) {
-      bulkStatus.classList.remove("success", "error");
+      bulkStatus.className = "status " + (type === "error" ? "error" : "success");
+      bulkStatus.innerHTML = message;
       bulkStatus.style.display = "block";
-      if (type === "success") {
-        bulkStatus.classList.add("success");
-        bulkStatus.innerHTML = '<span class="label">Success:</span> ' + message;
-      } else {
-        bulkStatus.classList.add("error");
-        bulkStatus.innerHTML = '<span class="label">Error:</span> ' + message;
-      }
     }
 
     function renderBulkPreview() {
       if (!bulkRows.length) {
-        bulkPreview.innerHTML = "No file selected. Upload an Excel file to see preview here.";
+        bulkPreview.textContent = "No file selected. Upload an Excel file to see preview here.";
         return;
       }
-
-      const maxRows = 20;
-      const rowsToShow = bulkRows.slice(0, maxRows);
-      const headers = Object.keys(rowsToShow[0]);
+      const headersSet = new Set();
+      bulkRows.forEach((row) => {
+        Object.keys(row).forEach((k) => headersSet.add(k));
+      });
+      headersSet.add("Error");
+      const headers = Array.from(headersSet);
 
       let html = "<table><thead><tr>";
       headers.forEach((h) => {
         html += "<th>" + h + "</th>";
       });
       html += "</tr></thead><tbody>";
-
-      rowsToShow.forEach((row) => {
+      bulkRows.forEach((row, idx) => {
         html += "<tr>";
         headers.forEach((h) => {
-          html += "<td>" + (row[h] ?? "") + "</td>";
+          if (h === "Error") {
+            html += "<td>" + (bulkRowErrors[idx] || "") + "</td>";
+          } else {
+            const val = row[h] != null ? row[h] : "";
+            html += "<td>" + val + "</td>";
+          }
         });
         html += "</tr>";
       });
-
       html += "</tbody></table>";
-
-      if (bulkRows.length > maxRows) {
-        html +=
-          '<div style="margin-top:4px; font-size:11px; color:#6b7280;">Showing first ' +
-          maxRows +
-          " rows only (total rows: " +
-          bulkRows.length +
-          ").</div>";
-      }
-
       bulkPreview.innerHTML = html;
     }
 
-    downloadTemplateBtn.addEventListener("click", () => {
-      const headerRow = [
-        "Student_ID",
-        "Student_Name",
-        "Class",
-        "Receipt_Date",
-        "Fee_Type",
-        "Amount",
-        "Receipt_No",
-        "Payment_Mode",
-        "UTR_No",
-        "Remarks",
-      ];
-
-      try {
-        if (typeof XLSX !== "undefined" && XLSX && XLSX.utils) {
-          const ws = XLSX.utils.aoa_to_sheet([headerRow]);
-          const wb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(wb, ws, "Template");
-          XLSX.writeFile(wb, "Fees_Entry_Template.xlsx");
-        } else {
-          const csv = headerRow.join(",") + "\n";
-          const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-          const link = document.createElement("a");
-          link.href = URL.createObjectURL(blob);
-          link.download = "Fees_Entry_Template.csv";
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          alert("XLSX library not available, downloaded CSV template instead.");
-        }
-      } catch (err) {
-        alert("Unable to generate template: " + err.message);
+    function buildBulkErrorsForDownload() {
+      bulkErrorsForDownload = [];
+      if (!bulkRows.length || !bulkRowErrors || !bulkRowErrors.length) return;
+      bulkRowErrors.forEach((msg, index) => {
+        if (!msg) return;
+        const row = bulkRows[index] || {};
+        bulkErrorsForDownload.push({
+          Excel_Row: index + 2,
+          Student_ID: row["Student_ID"] || "",
+          Student_Name: row["Student_Name"] || "",
+          Class: row["Class"] || "",
+          Receipt_Date: row["Receipt_Date"] || "",
+          Fee_Type: row["Fee_Type"] || "",
+          Amount: row["Amount"] || "",
+          Receipt_No: row["Receipt_No"] || "",
+          Payment_Mode: row["Payment_Mode"] || "",
+          UTR_No: row["UTR_No"] || "",
+          Remarks: row["Remarks"] || "",
+          Error_Message: msg,
+        });
+      });
+      const btn = document.getElementById("downloadErrorsBtn");
+      if (!btn) return;
+      if (bulkErrorsForDownload.length) {
+        btn.style.display = "inline-block";
+      } else {
+        btn.style.display = "none";
       }
-    });
+    }
 
-    bulkFileInput.addEventListener("change", () => {
-      const file = bulkFileInput.files[0];
+    function validateBulkRowsSimple() {
+      bulkRowErrors = new Array(bulkRows.length).fill("");
+      bulkRows.forEach((row, index) => {
+        const rowErrors = [];
+        const sid = (row["Student_ID"] || "").toString().trim();
+        const feeType = (row["Fee_Type"] || "").toString().trim();
+        const amtVal = row["Amount"];
+        const amount = Number(amtVal);
+        const receiptNo = (row["Receipt_No"] || "").toString().trim();
+        const pmode = (row["Payment_Mode"] || "").toString().trim();
+        const utr = (row["UTR_No"] || "").toString().trim();
+
+        if (!sid) rowErrors.push("Student_ID is blank");
+        if (!feeType) rowErrors.push("Fee_Type is blank");
+        if (feeType && ALLOWED_FEE_TYPES.indexOf(feeType) === -1) {
+          rowErrors.push("Fee_Type must be: " + ALLOWED_FEE_TYPES.join(" / "));
+        }
+        if (!amount || isNaN(amount) || amount <= 0) {
+          rowErrors.push("Amount must be positive");
+        }
+        if (!receiptNo) rowErrors.push("Receipt_No is blank");
+        if (!pmode) rowErrors.push("Payment_Mode is blank");
+        if (pmode && ALLOWED_PAYMENT_MODES.indexOf(pmode) === -1) {
+          rowErrors.push("Payment_Mode must be Cash or Bank");
+        }
+        if (pmode === "Bank" && !utr) {
+          rowErrors.push("Payment_Mode is Bank but UTR_No is blank");
+        }
+
+        bulkRowErrors[index] = rowErrors.join("; ");
+      });
+      buildBulkErrorsForDownload();
+      renderBulkPreview();
+    }
+
+    bulkFileInput.addEventListener("change", (evt) => {
+      const file = evt.target.files[0];
       bulkRows = [];
+      bulkRowErrors = [];
+      bulkErrorsForDownload = [];
+      const errBtn = document.getElementById("downloadErrorsBtn");
+      if (errBtn) errBtn.style.display = "none";
+
       if (!file) {
         renderBulkPreview();
         return;
@@ -900,65 +905,65 @@
           const worksheet = workbook.Sheets[firstSheetName];
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
-          if (!jsonData.length) {
-            showBulkStatus("error", "Excel sheet is empty.");
-            bulkRows = [];
+          const processed = jsonData.map((row) => {
+            const copy = Object.assign({}, row);
+            const val = copy["Receipt_Date"];
+            if (typeof val === "number" && XLSX && XLSX.SSF && XLSX.SSF.parse_date_code) {
+              const d = XLSX.SSF.parse_date_code(val);
+              if (d) {
+                const dd = String(d.d).padStart(2, "0");
+                const mm = String(d.m).padStart(2, "0");
+                const yyyy = d.y;
+                copy["Receipt_Date"] = dd + "-" + mm + "-" + yyyy;
+              }
+            }
+            return copy;
+          });
+
+          if (!processed.length) {
+            bulkPreview.textContent = "No data found in the first sheet.";
+            return;
           } else {
-            bulkRows = jsonData;
+            bulkRows = processed;
             bulkStatus.style.display = "none";
           }
-          renderBulkPreview();
+          validateBulkRowsSimple();
         } catch (err) {
-          bulkRows = [];
-          renderBulkPreview();
-          showBulkStatus("error", "Unable to read Excel file: " + err.message);
+          console.error(err);
+          bulkPreview.textContent = "Error reading Excel file: " + err.message;
         }
       };
       reader.readAsArrayBuffer(file);
     });
 
-    bulkClearBtn.addEventListener("click", () => {
+    document.getElementById("bulk_clearBtn").addEventListener("click", () => {
       bulkFileInput.value = "";
       bulkRows = [];
+      bulkRowErrors = [];
+      bulkErrorsForDownload = [];
       renderBulkPreview();
       bulkStatus.style.display = "none";
+      const errBtn = document.getElementById("downloadErrorsBtn");
+      if (errBtn) errBtn.style.display = "none";
     });
 
-    bulkUploadBtn.addEventListener("click", async () => {
-      if (!WEB_APP_URL || !WEB_APP_URL.startsWith("http")) {
-        showBulkStatus("error", "Please update WEB_APP_URL in the HTML before using the tool.");
-        return;
-      }
-
+    document.getElementById("bulk_uploadBtn").addEventListener("click", async () => {
       if (!bulkRows.length) {
         showBulkStatus("error", "No data found. Please upload an Excel file first.");
         return;
       }
 
+      validateBulkRowsSimple();
       const errors = [];
-      bulkRows.forEach((row, index) => {
-        const rowNumber = index + 2;
-        const studentId = (row["Student_ID"] || "").toString().trim();
-        const amount = row["Amount"];
-        const paymentMode = (row["Payment_Mode"] || "").toString().trim();
-        const utrNo = (row["UTR_No"] || "").toString().trim();
-
-        if (!studentId) {
-          errors.push("Row " + rowNumber + ": Student_ID is blank.");
-        }
-
-        if (amount === undefined || amount === null || amount === "") {
-          errors.push("Row " + rowNumber + ": Amount is blank.");
-        } else if (isNaN(Number(amount))) {
-          errors.push("Row " + rowNumber + ": Amount is not a valid number.");
-        }
-
-        if (paymentMode === "Bank" && !utrNo) {
-          errors.push("Row " + rowNumber + ": Payment_Mode is Bank but UTR_No is blank.");
+      bulkRowErrors.forEach((msg, index) => {
+        if (msg) {
+          const rowNumber = index + 2;
+          errors.push("Row " + rowNumber + ": " + msg);
         }
       });
 
       if (errors.length) {
+        buildBulkErrorsForDownload();
         showBulkStatus(
           "error",
           "Fix the following issues before upload:<br>" +
@@ -977,7 +982,6 @@
         showBulkStatus("success", "Uploading... please wait.");
         const res = await fetch(WEB_APP_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
 
@@ -990,11 +994,37 @@
 
         if (data.status === "success") {
           showBulkStatus("success", data.message || "Bulk entries uploaded successfully.");
+          bulkErrorsForDownload = [];
+          const errBtn = document.getElementById("downloadErrorsBtn");
+          if (errBtn) errBtn.style.display = "none";
         } else if (data.status === "error") {
-          showBulkStatus(
-            "error",
-            data.message || "Error from backend (e.g., some students fees not matching fixed structure)."
-          );
+          if (Array.isArray(data.errors) && data.errors.length) {
+            bulkRowErrors = new Array(bulkRows.length).fill("");
+            data.errors.forEach((msg) => {
+              const m = msg.match(/Row\s+(\d+)\s*:\s*(.*)/i);
+              if (m) {
+                const rowNumber = parseInt(m[1], 10);
+                const idx = rowNumber - 2;
+                if (idx >= 0 && idx < bulkRowErrors.length) {
+                  bulkRowErrors[idx] = m[2] || "";
+                }
+              }
+            });
+            renderBulkPreview();
+            buildBulkErrorsForDownload();
+
+            showBulkStatus(
+              "error",
+              (data.message || "Some rows are invalid. No data saved.") +
+                "<br><br>" +
+                data.errors.slice(0, 20).join("<br>")
+            );
+          } else {
+            showBulkStatus(
+              "error",
+              data.message || "Error from backend (e.g., some students fees not matching fixed structure)."
+            );
+          }
         } else {
           showBulkStatus(
             "success",
@@ -1005,6 +1035,445 @@
         showBulkStatus("error", "Network / script error: " + err.message);
       }
     });
+
+    const downloadErrorsBtn = document.getElementById("downloadErrorsBtn");
+    if (downloadErrorsBtn) {
+      downloadErrorsBtn.addEventListener("click", () => {
+        if (!bulkErrorsForDownload || !bulkErrorsForDownload.length) {
+          alert("No errors to download right now.");
+          return;
+        }
+        try {
+          if (typeof XLSX !== "undefined" && XLSX && XLSX.utils) {
+            const ws = XLSX.utils.json_to_sheet(bulkErrorsForDownload);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Errors");
+            XLSX.writeFile(wb, "Fees_Errors.xlsx");
+          } else {
+            const headers = Object.keys(bulkErrorsForDownload[0]);
+            const rows = bulkErrorsForDownload.map((row) =>
+              headers.map((h) => (row[h] != null ? row[h] : "")).join(",")
+            );
+            const csv = headers.join(",") + "\n" + rows.join("\n");
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "Fees_Errors.csv";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }
+        } catch (err) {
+          alert("Unable to download errors: " + err.message);
+        }
+      });
+    }
+
+    // ===== Dashboard Logic =====
+    async function loadDashboard(forceReload = false) {
+      const classSummaryEl = document.getElementById("classSummaryTable");
+      const studentSummaryEl = document.getElementById("studentSummaryTable");
+      const duesEl = document.getElementById("duesTable");
+      const monthSummaryEl = document.getElementById("monthSummaryTable");
+      const classFilter = document.getElementById("dash_classFilter");
+
+      if (!forceReload && dashboardLoaded && dashboardData) {
+        renderDashboardTables(dashboardData);
+        return;
+      }
+
+      if (classSummaryEl) classSummaryEl.textContent = "Loading...";
+      if (studentSummaryEl) studentSummaryEl.textContent = "Loading...";
+      if (duesEl) duesEl.textContent = "Loading...";
+      if (monthSummaryEl) monthSummaryEl.textContent = "Loading...";
+
+      try {
+        const res = await fetch(WEB_APP_URL + "?mode=dashboard");
+        if (!res.ok) {
+          const msg = "Dashboard fetch failed: " + res.status;
+          if (classSummaryEl) classSummaryEl.textContent = msg;
+          if (studentSummaryEl) studentSummaryEl.textContent = msg;
+          if (duesEl) duesEl.textContent = msg;
+          if (monthSummaryEl) monthSummaryEl.textContent = msg;
+          return;
+        }
+        const data = await res.json();
+        if (data.status !== "success") {
+          const msg = data.message || "Dashboard error from backend.";
+          if (classSummaryEl) classSummaryEl.textContent = msg;
+          if (studentSummaryEl) studentSummaryEl.textContent = msg;
+          if (duesEl) duesEl.textContent = msg;
+          if (monthSummaryEl) monthSummaryEl.textContent = msg;
+          return;
+        }
+        dashboardData = data;
+        dashboardLoaded = true;
+
+        if (classFilter && Array.isArray(data.byClass)) {
+          const existingVal = classFilter.value;
+          classFilter.innerHTML = '<option value="">All Classes</option>';
+          data.byClass.forEach((c) => {
+            const opt = document.createElement("option");
+            opt.value = c.className || "";
+            opt.textContent = c.className || "(No Class)";
+            classFilter.appendChild(opt);
+          });
+          if (existingVal) classFilter.value = existingVal;
+        }
+
+        renderDashboardTables(data);
+      } catch (err) {
+        const msg = "Dashboard network/script error: " + err.message;
+        if (classSummaryEl) classSummaryEl.textContent = msg;
+        if (studentSummaryEl) studentSummaryEl.textContent = msg;
+        if (duesEl) duesEl.textContent = msg;
+        if (monthSummaryEl) monthSummaryEl.textContent = msg;
+      }
+    }
+
+    function renderDashboardTables(data) {
+      const classSummaryEl = document.getElementById("classSummaryTable");
+      const studentSummaryEl = document.getElementById("studentSummaryTable");
+      const duesEl = document.getElementById("duesTable");
+      const monthSummaryEl = document.getElementById("monthSummaryTable");
+      const classFilter = document.getElementById("dash_classFilter");
+
+      if (!data) return;
+
+      // Class-wise
+      if (classSummaryEl) {
+        const rows = Array.isArray(data.byClass) ? data.byClass : [];
+        if (!rows.length) {
+          classSummaryEl.textContent = "No data found.";
+        } else {
+          let html = "<table><thead><tr>";
+          ["Class","Tuition Applicable","Tuition Collection","Tuition Pending","Bus Applicable","Bus Collection","Bus Pending","Total Applicable","Total Collection","Total Pending"].forEach((h) => {
+            html += "<th>" + h + "</th>";
+          });
+          html += "</tr></thead><tbody>";
+          rows.forEach((r) => {
+            html += "<tr>";
+            html += "<td>" + (r.className || "") + "</td>";
+            html += "<td>" + fmtAmount(r.tuitionApplicable) + "</td>";
+            html += "<td>" + fmtAmount(r.tuitionCollected) + "</td>";
+            html += "<td>" + fmtAmount(r.tuitionPending) + "</td>";
+            html += "<td>" + fmtAmount(r.busApplicable) + "</td>";
+            html += "<td>" + fmtAmount(r.busCollected) + "</td>";
+            html += "<td>" + fmtAmount(r.busPending) + "</td>";
+            html += "<td>" + fmtAmount(r.totalApplicable) + "</td>";
+            html += "<td>" + fmtAmount(r.totalCollected) + "</td>";
+            html += "<td>" + fmtAmount(r.totalPending) + "</td>";
+            html += "</tr>";
+          });
+          html += "</tbody></table>";
+          classSummaryEl.innerHTML = html;
+        }
+      }
+
+      // Student-wise
+      if (studentSummaryEl) {
+        let rows = Array.isArray(data.byStudent) ? data.byStudent.slice() : [];
+        const filterVal = classFilter ? classFilter.value : "";
+        if (filterVal) {
+          rows = rows.filter((r) => (r.className || "") === filterVal);
+        }
+        if (!rows.length) {
+          studentSummaryEl.textContent = "No students found for selected filter.";
+        } else {
+          rows.sort((a, b) => {
+            const ca = (a.className || "").localeCompare(b.className || "");
+            if (ca !== 0) return ca;
+            return (a.name || "").localeCompare(b.name || "");
+          });
+          let html = "<table><thead><tr>";
+          ["Student ID","Student Name","Class","Tuition Applicable","Bus Applicable","Total Applicable","Tuition Collection","Bus Collection","Total Collection","Total Pending"].forEach((h) => {
+            html += "<th>" + h + "</th>";
+          });
+          html += "</tr></thead><tbody>";
+          rows.forEach((r) => {
+            html += "<tr>";
+            html += "<td>" + (r.studentId || "") + "</td>";
+            html += "<td>" + (r.name || "") + "</td>";
+            html += "<td>" + (r.className || "") + "</td>";
+            html += "<td>" + fmtAmount(r.tuitionApplicable) + "</td>";
+            html += "<td>" + fmtAmount(r.busApplicable) + "</td>";
+            html += "<td>" + fmtAmount(r.totalApplicable) + "</td>";
+            html += "<td>" + fmtAmount(r.tuitionCollected) + "</td>";
+            html += "<td>" + fmtAmount(r.busCollected) + "</td>";
+            html += "<td>" + fmtAmount(r.totalCollected) + "</td>";
+            html += "<td>" + fmtAmount(r.totalPending) + "</td>";
+            html += "</tr>";
+          });
+          html += "</tbody></table>";
+          studentSummaryEl.innerHTML = html;
+        }
+      }
+
+      // Month-wise
+      if (monthSummaryEl) {
+        const rows = Array.isArray(data.byMonth) ? data.byMonth : [];
+        if (!rows.length) {
+          monthSummaryEl.textContent = "No month-wise data yet.";
+        } else {
+          let html = "<table><thead><tr>";
+          ["Month","Cash Collection","Bank Collection","Total Collection"].forEach((h) => {
+            html += "<th>" + h + "</th>";
+          });
+          html += "</tr></thead><tbody>";
+          rows.forEach((r) => {
+            const total = Number(r.cashCollection || 0) + Number(r.bankCollection || 0);
+            html += "<tr>";
+            html += "<td>" + (r.month || "") + "</td>";
+            html += "<td>" + fmtAmount(r.cashCollection) + "</td>";
+            html += "<td>" + fmtAmount(r.bankCollection) + "</td>";
+            html += "<td>" + fmtAmount(total) + "</td>";
+            html += "</tr>";
+          });
+          html += "</tbody></table>";
+          monthSummaryEl.innerHTML = html;
+        }
+      }
+
+      // Dues report
+      if (duesEl) {
+        let rows = Array.isArray(data.byStudent) ? data.byStudent.filter((r) => (r.totalPending || 0) > 0) : [];
+        if (!rows.length) {
+          duesEl.textContent = "No pending fees – great!";
+        } else {
+          rows.sort((a, b) => {
+            const ca = (a.className || "").localeCompare(b.className || "");
+            if (ca !== 0) return ca;
+            return (a.name || "").localeCompare(b.name || "");
+          });
+          let html = "<table><thead><tr>";
+          ["Student ID","Student Name","Class","Total Applicable","Total Collection","Total Pending"].forEach((h) => {
+            html += "<th>" + h + "</th>";
+          });
+          html += "</tr></thead><tbody>";
+          rows.forEach((r) => {
+            html += "<tr>";
+            html += "<td>" + (r.studentId || "") + "</td>";
+            html += "<td>" + (r.name || "") + "</td>";
+            html += "<td>" + (r.className || "") + "</td>";
+            html += "<td>" + fmtAmount(r.totalApplicable) + "</td>";
+            html += "<td>" + fmtAmount(r.totalCollected) + "</td>";
+            html += "<td>" + fmtAmount(r.totalPending) + "</td>";
+            html += "</tr>";
+          });
+          html += "</tbody></table>";
+          duesEl.innerHTML = html;
+        }
+      }
+
+      // Charts
+      renderClassChart(Array.isArray(data.byClass) ? data.byClass : []);
+      renderMonthChart(Array.isArray(data.byMonth) ? data.byMonth : []);
+    }
+
+    function renderClassChart(rows) {
+      const canvas = document.getElementById("classChart");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+
+      if (!rows.length) {
+        if (classChartInstance) {
+          classChartInstance.destroy();
+          classChartInstance = null;
+        }
+        return;
+      }
+
+      const labels = rows.map((r) => r.className || "");
+      const collected = rows.map((r) => Number(r.totalCollected || 0));
+      const pending = rows.map((r) => Number(r.totalPending || 0));
+
+      if (classChartInstance) classChartInstance.destroy();
+      classChartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Total Collected",
+              data: collected,
+            },
+            {
+              label: "Total Pending",
+              data: pending,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: "top" },
+          },
+          scales: {
+            y: { beginAtZero: true },
+          },
+        },
+      });
+    }
+
+    function renderMonthChart(rows) {
+      const canvas = document.getElementById("monthChart");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+
+      if (!rows.length) {
+        if (monthChartInstance) {
+          monthChartInstance.destroy();
+          monthChartInstance = null;
+        }
+        return;
+      }
+
+      const labels = rows.map((r) => r.month || "");
+      const cash = rows.map((r) => Number(r.cashCollection || 0));
+      const bank = rows.map((r) => Number(r.bankCollection || 0));
+
+      if (monthChartInstance) monthChartInstance.destroy();
+      monthChartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Cash",
+              data: cash,
+            },
+            {
+              label: "Bank",
+              data: bank,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: "top" },
+          },
+          scales: {
+            y: { beginAtZero: true },
+          },
+        },
+      });
+    }
+
+    const dashRefreshBtn = document.getElementById("dash_refreshBtn");
+    if (dashRefreshBtn) {
+      dashRefreshBtn.addEventListener("click", () => {
+        loadDashboard(true);
+      });
+    }
+
+    const dashClassFilter = document.getElementById("dash_classFilter");
+    if (dashClassFilter) {
+      dashClassFilter.addEventListener("change", () => {
+        if (dashboardData) {
+          renderDashboardTables(dashboardData);
+        }
+      });
+    }
+
+    // ===== Download Excel Template =====
+    document.getElementById("downloadTemplateBtn").addEventListener("click", () => {
+      try {
+        if (!studentsData.length) {
+          alert("Students not loaded yet. Please wait a moment and try again.");
+          return;
+        }
+        const header = [
+          "Student_ID",
+          "Student_Name",
+          "Class",
+          "Receipt_Date",
+          "Fee_Type",
+          "Amount",
+          "Receipt_No",
+          "Payment_Mode",
+          "UTR_No",
+          "Remarks",
+        ];
+        const data = studentsData.map((s) => ({
+          Student_ID: s.studentId || "",
+          Student_Name: s.name || "",
+          Class: s.class || "",
+          Receipt_Date: "",
+          Fee_Type: "",
+          Amount: "",
+          Receipt_No: "",
+          Payment_Mode: "",
+          UTR_No: "",
+          Remarks: "",
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(data, { header });
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Fees_Entry");
+
+        XLSX.writeFile(workbook, "Fees_Entry_Template.xlsx");
+      } catch (err) {
+        console.error(err);
+        alert("Unable to generate template: " + err.message);
+      }
+    });
+
+    // ===== Load students from backend for dropdowns & template =====
+    async function loadStudents() {
+      try {
+        const res = await fetch(WEB_APP_URL + "?mode=students");
+        const data = await res.json();
+        if (data && data.status === "success" && Array.isArray(data.students)) {
+          studentsData = data.students;
+        } else if (Array.isArray(data)) {
+          studentsData = data;
+        } else {
+          studentsData = [];
+        }
+      } catch (err) {
+        console.error("Error loading students", err);
+        studentsData = [];
+      }
+
+      const pill = document.getElementById("studentCountPill");
+      if (pill) {
+        const count = studentsData.length || 0;
+        pill.textContent = count + " students • Student ID mandatory";
+      }
+
+      const classes = Array.from(new Set(studentsData.map((s) => s.class || ""))).filter(Boolean).sort();
+      searchClassFilter.innerHTML = '<option value="">All Classes</option>';
+      classes.forEach((cls) => {
+        const opt = document.createElement("option");
+        opt.value = cls;
+        opt.textContent = cls;
+        searchClassFilter.appendChild(opt);
+      });
+
+      populateStudentFilter("");
+    }
+
+    function populateStudentFilter(classFilterVal) {
+      let list = studentsData;
+      if (classFilterVal) {
+        list = list.filter((s) => (s.class || "") === classFilterVal);
+      }
+      if (!list.length) {
+        searchStudentFilter.innerHTML = '<option value="">No students for selected class</option>';
+        return;
+      }
+      searchStudentFilter.innerHTML = '<option value="">Select Student</option>';
+      list.forEach((s) => {
+        const opt = document.createElement("option");
+        opt.value = s.studentId;
+        opt.textContent = (s.studentId || "") + " - " + (s.name || "");
+        searchStudentFilter.appendChild(opt);
+      });
+    }
+
+    // Initial load
+    loadStudents();
   </script>
 </body>
 </html>
