@@ -1,1479 +1,1639 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>School Fees Entry Tool</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <!-- SheetJS for Excel read/write -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <!-- Chart.js for dashboard charts -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      margin: 0;
-      padding: 24px;
-      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f3f4f6;
-      color: #111827;
-    }
-    .page {
-      max-width: 1120px;
-      margin: 0 auto;
-    }
-    .card {
-      background: #ffffff;
-      border-radius: 24px;
-      padding: 24px 28px 28px;
-      box-shadow: 0 18px 45px rgba(15,23,42,0.12);
-    }
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-      gap: 12px;
-    }
-    .logo-circle {
-      width: 44px;
-      height: 44px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, #1d4ed8, #3b82f6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #ffffff;
-      font-weight: 600;
-      font-size: 20px;
-      flex-shrink: 0;
-    }
-    .title-block h1 {
-      margin: 0;
-      font-size: 22px;
-      font-weight: 600;
-      letter-spacing: 0.01em;
-    }
-    .title-block p {
-      margin: 2px 0 0;
-      font-size: 13px;
-      color: #6b7280;
-    }
-    .pill {
-      border-radius: 999px;
-      padding: 6px 14px;
-      font-size: 11px;
-      background: #eff6ff;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
-      white-space: nowrap;
-    }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JEMS School Fees Tool</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Prop Types (Required by Recharts UMD) -->
+    <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
 
-    .tabs {
-      display: inline-flex;
-      padding: 4px;
-      border-radius: 999px;
-      background: #f3f4f6;
-      gap: 4px;
-      margin-bottom: 14px;
-      margin-top: 8px;
-    }
-    .tab-btn {
-      border: none;
-      background: transparent;
-      padding: 6px 16px;
-      border-radius: 999px;
-      font-size: 13px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      color: #4b5563;
-      transition: all 0.2s ease;
-    }
-    .tab-btn .icon {
-      font-size: 15px;
-    }
-    .tab-btn.active {
-      background: linear-gradient(135deg, #1d4ed8, #2563eb);
-      color: #ffffff;
-      box-shadow: 0 8px 18px rgba(37,99,235,0.35);
-    }
+    <!-- Recharts (Charts) - Fixed Version -->
+    <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- SheetJS (Excel) -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
-    .tab-content {
-      margin-top: 10px;
-    }
-    .hidden {
-      display: none;
-    }
-
-    .section-title {
-      font-size: 15px;
-      font-weight: 600;
-      margin: 4px 0 6px;
-    }
-    .info-text {
-      font-size: 12px;
-      color: #6b7280;
-      margin-bottom: 10px;
-    }
-
-    .grid-two {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 14px 18px;
-      margin-top: 10px;
-    }
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      font-size: 12px;
-    }
-    .field label {
-      font-weight: 500;
-      color: #374151;
-      font-size: 12px;
-    }
-    .field input,
-    .field select,
-    .field textarea {
-      border-radius: 10px;
-      border: 1px solid #d1d5db;
-      padding: 7px 9px;
-      font-size: 13px;
-      font-family: inherit;
-      outline: none;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
-      background: #ffffff;
-    }
-    .field input:focus,
-    .field select:focus,
-    .field textarea:focus {
-      border-color: #2563eb;
-      box-shadow: 0 0 0 1px rgba(37,99,235,0.18);
-    }
-    .field textarea {
-      resize: vertical;
-      min-height: 70px;
-    }
-    .required {
-      color: #ef4444;
-      margin-left: 2px;
-    }
-    .small-hint {
-      font-size: 11px;
-      color: #9ca3af;
-    }
-    .tag-list {
-      margin-top: 6px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      font-size: 10px;
-    }
-    .tag {
-      border-radius: 999px;
-      background: #f9fafb;
-      border: 1px dashed #e5e7eb;
-      padding: 4px 8px;
-      color: #6b7280;
-    }
-
-    .actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 14px;
-    }
-    .btn {
-      border-radius: 999px;
-      border: none;
-      padding: 7px 18px;
-      font-size: 13px;
-      cursor: pointer;
-      font-family: inherit;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, #1d4ed8, #2563eb);
-      color: #ffffff;
-      box-shadow: 0 10px 20px rgba(37,99,235,0.35);
-    }
-    .btn-secondary {
-      background: #f3f4f6;
-      color: #374151;
-      border: 1px solid #e5e7eb;
-    }
-
-    .status {
-      margin-top: 10px;
-      padding: 8px 10px;
-      border-radius: 10px;
-      font-size: 12px;
-      display: none;
-    }
-    .status.error {
-      background: #fef2f2;
-      color: #b91c1c;
-      border: 1px solid #fecaca;
-    }
-    .status.success {
-      background: #ecfdf3;
-      color: #166534;
-      border: 1px solid #bbf7d0;
-    }
-
-    .bulk-section {
-      margin-top: 6px;
-    }
-
-    .template-box {
-      border-radius: 14px;
-      border: 1px dashed #d1d5db;
-      padding: 12px 14px;
-      background: #f9fafb;
-      margin-bottom: 10px;
-    }
-    .template-title {
-      font-weight: 600;
-      font-size: 13px;
-      margin-bottom: 4px;
-    }
-
-    .preview-box {
-      margin-top: 14px;
-      padding: 10px;
-      border-radius: 14px;
-      border: 1px solid #e5e7eb;
-      background: #f9fafb;
-      font-size: 11px;
-      max-height: 260px;
-      overflow: auto;
-    }
-    .preview-box table {
-      border-collapse: collapse;
-      width: 100%;
-      font-size: 11px;
-    }
-    .preview-box th,
-    .preview-box td {
-      border: 1px solid #e5e7eb;
-      padding: 4px 6px;
-      white-space: nowrap;
-    }
-    .preview-box th {
-      background: #eff6ff;
-      font-weight: 600;
-      text-align: left;
-    }
-
-    .subtle-note {
-      font-size: 11px;
-      color: #9ca3af;
-      margin-top: 6px;
-    }
-
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 16px;
-      margin-top: 12px;
-    }
-    .dashboard-card {
-      background: #f9fafb;
-      border-radius: 16px;
-      padding: 14px 16px;
-      box-shadow: 0 1px 3px rgba(15,23,42,0.06);
-    }
-    .dashboard-title {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-    .dashboard-table table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 11px;
-    }
-    .dashboard-table th,
-    .dashboard-table td {
-      border: 1px solid #e5e7eb;
-      padding: 4px 6px;
-      text-align: right;
-      white-space: nowrap;
-    }
-    .dashboard-table th:first-child,
-    .dashboard-table td:first-child {
-      text-align: left;
-    }
-    .chart-wrapper {
-      margin-top: 10px;
-    }
-
-    @media (max-width: 640px) {
+    <style>
+      :root {
+        --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      }
       body {
-        padding: 12px;
+        font-family: 'Inter', sans-serif;
+        background-color: #f8fafc;
+        background-image: 
+          radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),
+          radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.08) 0px, transparent 50%);
+        background-attachment: fixed;
       }
-      .card {
-        padding: 16px 14px 18px;
-        border-radius: 18px;
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Poppins', sans-serif;
       }
-      .card-header {
-        flex-direction: column;
-        align-items: flex-start;
+      
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
       }
-      .actions {
-        flex-direction: column-reverse;
-        align-items: stretch;
+      ::-webkit-scrollbar-track {
+        background: transparent;
       }
-      .btn {
-        justify-content: center;
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
       }
-    }
-  </style>
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+
+      /* Receipt ZigZag Edge */
+      .receipt-edge {
+        position: relative;
+        background: white;
+      }
+      .receipt-edge:after {
+        content: "";
+        display: block;
+        position: absolute;
+        bottom: -10px;
+        left: 0;
+        width: 100%;
+        height: 10px;
+        background: linear-gradient(45deg, transparent 33.333%, #ffffff 33.333%, #ffffff 66.667%, transparent 66.667%), 
+                    linear-gradient(-45deg, transparent 33.333%, #ffffff 33.333%, #ffffff 66.667%, transparent 66.667%);
+        background-size: 20px 40px;
+        background-position: 0 -20px;
+      }
+
+      /* Animations */
+      @keyframes fadeInScale {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      .animate-in {
+        animation: fadeInScale 0.3s ease-out forwards;
+      }
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+      }
+      
+      /* Hide scrollbar for tabs */
+      .no-scrollbar::-webkit-scrollbar {
+          display: none;
+      }
+      .no-scrollbar {
+          -ms-overflow-style: none; 
+          scrollbar-width: none; 
+      }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "xlsx": "https://aistudiocdn.com/xlsx@^0.18.5",
+    "recharts": "https://aistudiocdn.com/recharts@^3.4.1"
+  }
+}
+</script>
 </head>
 <body>
-  <div class="page">
-    <div class="card">
-      <div class="card-header">
-        <div style="display:flex;align-items:center;gap:12px;">
-          <div class="logo-circle">J</div>
-          <div class="title-block">
-            <h1>School Fees Entry Tool</h1>
-            <p>Manage Opening Balance, Tuition Fees_25-26 &amp; Bus Fees_25-26 with single and bulk payments.</p>
-          </div>
-        </div>
-        <div class="pill" id="studentCountPill">Students • Student ID mandatory</div>
-      </div>
+    <div id="root"></div>
 
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="singleTab">
-          <span class="icon">🧾</span> Single Entry
-        </button>
-        <button class="tab-btn" data-tab="bulkTab">
-          <span class="icon">📊</span> Bulk Excel Upload
-        </button>
-        <button class="tab-btn" data-tab="dashboardTab">
-          <span class="icon">📈</span> Dashboard
-        </button>
-      </div>
+    <script type="text/babel">
+        // --- GLOBALS & IMPORTS ---
+        const { useState, useEffect, useMemo, useRef } = React;
+        
+        // Safe destructuring for Recharts to avoid crashes if load fails
+        const Recharts = window.Recharts || {};
+        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } = Recharts;
 
-      <!-- Single Entry -->
-      <div id="singleTab" class="tab-content">
-        <p class="info-text">
-          <b>Single Entry</b> – Use this for one student at a time. Student ID is compulsory. Fee type must match the
-          master fee structure in your Google Sheet. The backend will validate and show error if total fee collection goes
-          beyond fixed fees.
-        </p>
-
-        <div class="section-title">Search Student</div>
-        <div class="grid-two">
-          <div class="field">
-            <label>Class Filter</label>
-            <select id="searchClassFilter">
-              <option value="">All Classes</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Student Name Filter</label>
-            <select id="searchStudentFilter">
-              <option value="">Select class first</option>
-            </select>
-            <div class="small-hint">On selecting a student, Student ID / Name / Class in the form will auto-fill.</div>
-          </div>
-        </div>
-
-        <div class="section-title" style="margin-top:14px;">Entry Details</div>
-        <div class="grid-two">
-          <div class="field">
-            <label>Student ID<span class="required">*</span></label>
-            <input id="studentId" type="text" placeholder="Unique ID as per master sheet" />
-          </div>
-          <div class="field">
-            <label>Student Name</label>
-            <input id="studentName" type="text" placeholder="Student name" />
-          </div>
-          <div class="field">
-            <label>Class</label>
-            <input id="studentClass" type="text" placeholder="e.g. 1st Std" />
-          </div>
-          <div class="field">
-            <label>Receipt Date</label>
-            <input id="receiptDate" type="date" />
-          </div>
-          <div class="field">
-            <label>Fee Type<span class="required">*</span></label>
-            <select id="feeType">
-              <option value="">Select Fee Type</option>
-              <option value="Opening Balance">Opening Balance</option>
-              <option value="Tuition Fees_25-26">Tuition Fees_25-26</option>
-              <option value="Bus Fees_25-26">Bus Fees_25-26</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Amount (₹)<span class="required">*</span></label>
-            <input id="amount" type="number" min="0" step="0.01" placeholder="Amount in ₹" />
-          </div>
-          <div class="field">
-            <label>Receipt No<span class="required">*</span></label>
-            <input id="receiptNo" type="text" placeholder="Receipt number" />
-          </div>
-          <div class="field">
-            <label>Payment Mode<span class="required">*</span></label>
-            <select id="paymentMode">
-              <option value="">Select Payment Mode</option>
-              <option value="Cash">Cash</option>
-              <option value="Bank">Bank</option>
-            </select>
-            <div class="small-hint">If Bank is selected, UTR No is mandatory.</div>
-          </div>
-          <div class="field">
-            <label>UTR No (for Bank payments)</label>
-            <input id="utrNo" type="text" placeholder="Enter UTR No if Payment Mode is Bank" />
-          </div>
-          <div class="field">
-            <label>Remarks</label>
-            <textarea id="remarks" placeholder="Optional notes"></textarea>
-          </div>
-        </div>
-
-        <div class="tag-list">
-          <div class="tag">Tuition &amp; Bus fees checked in backend</div>
-          <div class="tag">If total collection &gt; fixed fees → error</div>
-          <div class="tag">Student ID is compulsory</div>
-        </div>
-
-        <div class="actions">
-          <button type="button" class="btn btn-secondary" id="single_clearBtn">Clear</button>
-          <button type="button" class="btn btn-primary" id="single_saveBtn">
-            <span>Save Single Entry</span> 🇮🇳
-          </button>
-        </div>
-
-        <div id="singleStatus" class="status"></div>
-      </div>
-
-      <!-- Bulk Upload Section -->
-      <div id="bulkTab" class="tab-content hidden">
-        <p class="info-text">
-          <b>Bulk Excel Upload</b> – Upload multiple records at once. Use the Excel template below. For bank payments, UTR No is mandatory.
-          Backend will validate against fixed fee structure for each student.
-        </p>
-
-        <div class="bulk-section">
-          <div class="template-box">
-            <div class="template-title">Download Excel Template</div>
-            <p style="margin:4px 0 8px 0;">
-              Click below to download the template file. It already contains all required headers and a pre-filled list of all
-              students from your master sheet. Fee_Type allowed values: Opening Balance / Tuition Fees_25-26 / Bus Fees_25-26.
-              Payment_Mode allowed values: Cash / Bank.
-            </p>
-            <button type="button" class="btn btn-secondary" id="downloadTemplateBtn">
-              Download Excel Template ⬇️
-            </button>
-          </div>
-
-          <div style="margin-top: 14px;">
-            <div class="field">
-              <label>Upload Excel File (.xlsx)<span class="required">*</span></label>
-              <input type="file" id="bulkFileInput" accept=".xlsx" />
-              <div class="small-hint">
-                After selecting file, a preview of first few rows will appear below.
-              </div>
-            </div>
-          </div>
-
-          <div class="actions">
-            <button type="button" class="btn btn-secondary" id="bulk_clearBtn">Clear</button>
-            <button type="button" class="btn btn-primary" id="bulk_uploadBtn">
-              <span>Upload Bulk Entries</span> ⬆️
-            </button>
-            <button type="button" class="btn btn-secondary" id="downloadErrorsBtn" style="display:none;">
-              Download Errors ⬇️
-            </button>
-          </div>
-
-          <div class="preview-box" id="bulkPreview">
-            No file selected. Upload an Excel file to see preview here.
-          </div>
-          <p class="subtle-note">
-            Note: Before upload, the tool will check:<br />
-            1) <b>Student_ID</b> not blank<br />
-            2) If <b>Payment_Mode = Bank</b>, then <b>UTR_No</b> must be filled<br />
-            3) Basic validation on amount (must be a number)
-          </p>
-
-          <div id="bulkStatus" class="status"></div>
-        </div>
-      </div>
-
-      <!-- Dashboard Section -->
-      <div id="dashboardTab" class="tab-content hidden">
-        <p class="info-text">
-          <b>Dashboard</b> – View class-wise and student-wise fee summary, collections, dues, and month-wise cash/bank collections.
-        </p>
-
-        <div class="actions" style="justify-content:flex-start; gap:8px;">
-          <button type="button" class="btn btn-secondary" id="dash_refreshBtn">
-            Refresh Dashboard 🔄
-          </button>
-        </div>
-
-        <div class="dashboard-grid">
-          <div class="dashboard-card">
-            <div class="dashboard-title">Class-wise Summary</div>
-            <div id="classSummaryTable" class="dashboard-table">
-              Click "Refresh Dashboard" to load data.
-            </div>
-            <div class="chart-wrapper">
-              <canvas id="classChart" height="130"></canvas>
-            </div>
-          </div>
-
-          <div class="dashboard-card">
-            <div class="dashboard-title">Student-wise Summary</div>
-            <div class="field" style="max-width:240px;">
-              <label>Filter by Class</label>
-              <select id="dash_classFilter">
-                <option value="">All Classes</option>
-              </select>
-            </div>
-            <div id="studentSummaryTable" class="dashboard-table" style="margin-top:8px;">
-              Click "Refresh Dashboard" to load data.
-            </div>
-          </div>
-        </div>
-
-        <div class="dashboard-card" style="margin-top:16px;">
-          <div class="dashboard-title">Month-wise Collection (Cash vs Bank)</div>
-          <div id="monthSummaryTable" class="dashboard-table">
-            Click "Refresh Dashboard" to load data.
-          </div>
-          <div class="chart-wrapper">
-            <canvas id="monthChart" height="120"></canvas>
-          </div>
-        </div>
-
-        <div class="dashboard-card" style="margin-top:16px;">
-          <div class="dashboard-title">Fee Dues Report (Pending Only)</div>
-          <div id="duesTable" class="dashboard-table">
-            Click "Refresh Dashboard" to load data.
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // ===== CONFIG =====
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby7aCmtimRNFE8lnVGgGeQozn8oh_gMan3SiI1SNaNcYuweRaOUdBk_PecuB_6lbIcZ/exec";
-
-    const ALLOWED_FEE_TYPES = ["Opening Balance","Tuition Fees_25-26","Bus Fees_25-26"];
-    const ALLOWED_PAYMENT_MODES = ["Cash","Bank"];
-
-    let studentsData = [];
-    let bulkRows = [];
-    let bulkRowErrors = [];
-    let bulkErrorsForDownload = [];
-
-    let dashboardData = null;
-    let dashboardLoaded = false;
-    let classChartInstance = null;
-    let monthChartInstance = null;
-
-    function fmtAmount(n) {
-      if (n === null || n === undefined || n === "") return "";
-      const num = Number(n);
-      if (isNaN(num)) return String(n);
-      return num.toLocaleString("en-IN", { maximumFractionDigits: 2 });
-    }
-
-    // ===== Tabs =====
-    const tabButtons = document.querySelectorAll(".tab-btn");
-    const tabContents = {
-      singleTab: document.getElementById("singleTab"),
-      bulkTab: document.getElementById("bulkTab"),
-      dashboardTab: document.getElementById("dashboardTab"),
-    };
-
-    tabButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        tabButtons.forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        const tabId = btn.getAttribute("data-tab");
-        if (tabId === "dashboardTab") {
-          loadDashboard(false);
-        }
-        Object.keys(tabContents).forEach((id) => {
-          if (id === tabId) {
-            tabContents[id].classList.remove("hidden");
-          } else {
-            tabContents[id].classList.add("hidden");
-          }
-        });
-      });
-    });
-
-    // ===== Single Entry Logic =====
-    const searchClassFilter = document.getElementById("searchClassFilter");
-    const searchStudentFilter = document.getElementById("searchStudentFilter");
-    const studentIdInput = document.getElementById("studentId");
-    const studentNameInput = document.getElementById("studentName");
-    const studentClassInput = document.getElementById("studentClass");
-    const receiptDateInput = document.getElementById("receiptDate");
-    const feeTypeSelect = document.getElementById("feeType");
-    const amountInput = document.getElementById("amount");
-    const receiptNoInput = document.getElementById("receiptNo");
-    const paymentModeSelect = document.getElementById("paymentMode");
-    const utrNoInput = document.getElementById("utrNo");
-    const remarksInput = document.getElementById("remarks");
-    const singleStatus = document.getElementById("singleStatus");
-
-    function showSingleStatus(type, message) {
-      singleStatus.className = "status " + (type === "error" ? "error" : "success");
-      singleStatus.innerHTML = message;
-      singleStatus.style.display = "block";
-    }
-
-    function clearSingleForm() {
-      searchClassFilter.value = "";
-      searchStudentFilter.innerHTML = '<option value="">Select class first</option>';
-      studentIdInput.value = "";
-      studentNameInput.value = "";
-      studentClassInput.value = "";
-      receiptDateInput.value = "";
-      feeTypeSelect.value = "";
-      amountInput.value = "";
-      receiptNoInput.value = "";
-      paymentModeSelect.value = "";
-      utrNoInput.value = "";
-      remarksInput.value = "";
-      singleStatus.style.display = "none";
-    }
-
-    document.getElementById("single_clearBtn").addEventListener("click", clearSingleForm);
-
-    paymentModeSelect.addEventListener("change", () => {
-      if (paymentModeSelect.value === "Bank") {
-        utrNoInput.placeholder = "UTR No is mandatory for Bank payments";
-      } else {
-        utrNoInput.placeholder = "Enter UTR No if Payment Mode is Bank";
-      }
-    });
-
-    searchClassFilter.addEventListener("change", () => {
-      const cls = searchClassFilter.value;
-      populateStudentFilter(cls);
-    });
-
-    searchStudentFilter.addEventListener("change", () => {
-      const val = searchStudentFilter.value; // studentId
-      if (!val) return;
-      const stu = studentsData.find((s) => s.studentId === val);
-      if (!stu) return;
-      studentIdInput.value = stu.studentId;
-      studentNameInput.value = stu.name || "";
-      studentClassInput.value = stu.class || "";
-    });
-
-    document.getElementById("single_saveBtn").addEventListener("click", async () => {
-      const studentId = (studentIdInput.value || "").trim();
-      const studentName = (studentNameInput.value || "").trim();
-      const className = (studentClassInput.value || "").trim();
-      let dateVal = receiptDateInput.value; // yyyy-mm-dd
-      let receiptDateStr = "";
-      if (dateVal) {
-        const parts = dateVal.split("-");
-        if (parts.length === 3) {
-          const yyyy = parts[0];
-          const mm = parts[1];
-          const dd = parts[2];
-          receiptDateStr = dd + "-" + mm + "-" + yyyy; // dd-mm-yyyy
-        } else {
-          receiptDateStr = dateVal;
-        }
-      }
-      const feeType = feeTypeSelect.value;
-      const amount = Number(amountInput.value || 0);
-      const receiptNo = (receiptNoInput.value || "").trim();
-      const paymentMode = paymentModeSelect.value;
-      const utrNo = (utrNoInput.value || "").trim();
-      const remarks = (remarksInput.value || "").trim();
-
-      if (!studentId) {
-        showSingleStatus("error", "Student ID is required.");
-        return;
-      }
-      if (!feeType) {
-        showSingleStatus("error", "Fee Type is required.");
-        return;
-      }
-      if (ALLOWED_FEE_TYPES.indexOf(feeType) === -1) {
-        showSingleStatus("error", "Invalid Fee Type. Allowed: " + ALLOWED_FEE_TYPES.join(" / "));
-        return;
-      }
-      if (!amount || isNaN(amount) || amount <= 0) {
-        showSingleStatus("error", "Amount must be a positive number.");
-        return;
-      }
-      if (!receiptNo) {
-        showSingleStatus("error", "Receipt No is required.");
-        return;
-      }
-      if (!paymentMode) {
-        showSingleStatus("error", "Payment Mode is required.");
-        return;
-      }
-      if (ALLOWED_PAYMENT_MODES.indexOf(paymentMode) === -1) {
-        showSingleStatus("error", "Invalid Payment Mode. Allowed: Cash / Bank.");
-        return;
-      }
-      if (paymentMode === "Bank" && !utrNo) {
-        showSingleStatus("error", "For Bank payments, UTR No is mandatory.");
-        return;
-      }
-
-      const payload = {
-        mode: "single",
-        studentId,
-        studentName,
-        class: className,
-        receiptDate: receiptDateStr,
-        feeType,
-        amount,
-        receiptNo,
-        paymentMode,
-        utrNo,
-        remarks,
-      };
-
-      try {
-        showSingleStatus("success", "Saving... please wait.");
-        const res = await fetch(WEB_APP_URL, {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) {
-          showSingleStatus("error", "Server error: " + res.status + " – please check backend deployment.");
-          return;
-        }
-        const data = await res.json().catch(() => ({}));
-        if (data.status === "success") {
-          showSingleStatus("success", data.message || "Single entry saved successfully.");
-        } else {
-          showSingleStatus("error", data.message || "Error while saving. Please check backend.");
-        }
-      } catch (err) {
-        showSingleStatus("error", "Network / script error: " + err.message);
-      }
-    });
-
-    // ===== Bulk Upload Logic =====
-    const bulkFileInput = document.getElementById("bulkFileInput");
-    const bulkPreview = document.getElementById("bulkPreview");
-    const bulkStatus = document.getElementById("bulkStatus");
-
-    function showBulkStatus(type, message) {
-      bulkStatus.className = "status " + (type === "error" ? "error" : "success");
-      bulkStatus.innerHTML = message;
-      bulkStatus.style.display = "block";
-    }
-
-    function renderBulkPreview() {
-      if (!bulkRows.length) {
-        bulkPreview.textContent = "No file selected. Upload an Excel file to see preview here.";
-        return;
-      }
-      const headersSet = new Set();
-      bulkRows.forEach((row) => {
-        Object.keys(row).forEach((k) => headersSet.add(k));
-      });
-      headersSet.add("Error");
-      const headers = Array.from(headersSet);
-
-      let html = "<table><thead><tr>";
-      headers.forEach((h) => {
-        html += "<th>" + h + "</th>";
-      });
-      html += "</tr></thead><tbody>";
-      bulkRows.forEach((row, idx) => {
-        html += "<tr>";
-        headers.forEach((h) => {
-          if (h === "Error") {
-            html += "<td>" + (bulkRowErrors[idx] || "") + "</td>";
-          } else {
-            const val = row[h] != null ? row[h] : "";
-            html += "<td>" + val + "</td>";
-          }
-        });
-        html += "</tr>";
-      });
-      html += "</tbody></table>";
-      bulkPreview.innerHTML = html;
-    }
-
-    function buildBulkErrorsForDownload() {
-      bulkErrorsForDownload = [];
-      if (!bulkRows.length || !bulkRowErrors || !bulkRowErrors.length) return;
-      bulkRowErrors.forEach((msg, index) => {
-        if (!msg) return;
-        const row = bulkRows[index] || {};
-        bulkErrorsForDownload.push({
-          Excel_Row: index + 2,
-          Student_ID: row["Student_ID"] || "",
-          Student_Name: row["Student_Name"] || "",
-          Class: row["Class"] || "",
-          Receipt_Date: row["Receipt_Date"] || "",
-          Fee_Type: row["Fee_Type"] || "",
-          Amount: row["Amount"] || "",
-          Receipt_No: row["Receipt_No"] || "",
-          Payment_Mode: row["Payment_Mode"] || "",
-          UTR_No: row["UTR_No"] || "",
-          Remarks: row["Remarks"] || "",
-          Error_Message: msg,
-        });
-      });
-      const btn = document.getElementById("downloadErrorsBtn");
-      if (!btn) return;
-      if (bulkErrorsForDownload.length) {
-        btn.style.display = "inline-block";
-      } else {
-        btn.style.display = "none";
-      }
-    }
-
-    function validateBulkRowsSimple() {
-      bulkRowErrors = new Array(bulkRows.length).fill("");
-      bulkRows.forEach((row, index) => {
-        const rowErrors = [];
-        const sid = (row["Student_ID"] || "").toString().trim();
-        const feeType = (row["Fee_Type"] || "").toString().trim();
-        const amtVal = row["Amount"];
-        const amount = Number(amtVal);
-        const receiptNo = (row["Receipt_No"] || "").toString().trim();
-        const pmode = (row["Payment_Mode"] || "").toString().trim();
-        const utr = (row["UTR_No"] || "").toString().trim();
-
-        if (!sid) rowErrors.push("Student_ID is blank");
-        if (!feeType) rowErrors.push("Fee_Type is blank");
-        if (feeType && ALLOWED_FEE_TYPES.indexOf(feeType) === -1) {
-          rowErrors.push("Fee_Type must be: " + ALLOWED_FEE_TYPES.join(" / "));
-        }
-        if (!amount || isNaN(amount) || amount <= 0) {
-          rowErrors.push("Amount must be positive");
-        }
-        if (!receiptNo) rowErrors.push("Receipt_No is blank");
-        if (!pmode) rowErrors.push("Payment_Mode is blank");
-        if (pmode && ALLOWED_PAYMENT_MODES.indexOf(pmode) === -1) {
-          rowErrors.push("Payment_Mode must be Cash or Bank");
-        }
-        if (pmode === "Bank" && !utr) {
-          rowErrors.push("Payment_Mode is Bank but UTR_No is blank");
+        if (!window.Recharts) {
+            console.error("Recharts library failed to load. Charts will not display.");
         }
 
-        bulkRowErrors[index] = rowErrors.join("; ");
-      });
-      buildBulkErrorsForDownload();
-      renderBulkPreview();
-    }
-
-    bulkFileInput.addEventListener("change", (evt) => {
-      const file = evt.target.files[0];
-      bulkRows = [];
-      bulkRowErrors = [];
-      bulkErrorsForDownload = [];
-      const errBtn = document.getElementById("downloadErrorsBtn");
-      if (errBtn) errBtn.style.display = "none";
-
-      if (!file) {
-        renderBulkPreview();
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: "array" });
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
-
-          const processed = jsonData.map((row) => {
-            const copy = Object.assign({}, row);
-            const val = copy["Receipt_Date"];
-            if (typeof val === "number" && XLSX && XLSX.SSF && XLSX.SSF.parse_date_code) {
-              const d = XLSX.SSF.parse_date_code(val);
-              if (d) {
-                const dd = String(d.d).padStart(2, "0");
-                const mm = String(d.m).padStart(2, "0");
-                const yyyy = d.y;
-                copy["Receipt_Date"] = dd + "-" + mm + "-" + yyyy;
-              }
-            }
-            return copy;
-          });
-
-          if (!processed.length) {
-            bulkPreview.textContent = "No data found in the first sheet.";
-            return;
-          } else {
-            bulkRows = processed;
-            bulkStatus.style.display = "none";
-          }
-          validateBulkRowsSimple();
-        } catch (err) {
-          console.error(err);
-          bulkPreview.textContent = "Error reading Excel file: " + err.message;
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    });
-
-    document.getElementById("bulk_clearBtn").addEventListener("click", () => {
-      bulkFileInput.value = "";
-      bulkRows = [];
-      bulkRowErrors = [];
-      bulkErrorsForDownload = [];
-      renderBulkPreview();
-      bulkStatus.style.display = "none";
-      const errBtn = document.getElementById("downloadErrorsBtn");
-      if (errBtn) errBtn.style.display = "none";
-    });
-
-    document.getElementById("bulk_uploadBtn").addEventListener("click", async () => {
-      if (!bulkRows.length) {
-        showBulkStatus("error", "No data found. Please upload an Excel file first.");
-        return;
-      }
-
-      validateBulkRowsSimple();
-      const errors = [];
-      bulkRowErrors.forEach((msg, index) => {
-        if (msg) {
-          const rowNumber = index + 2;
-          errors.push("Row " + rowNumber + ": " + msg);
-        }
-      });
-
-      if (errors.length) {
-        buildBulkErrorsForDownload();
-        showBulkStatus(
-          "error",
-          "Fix the following issues before upload:<br>" +
-            errors.slice(0, 8).join("<br>") +
-            (errors.length > 8 ? "<br>... and more (" + (errors.length - 8) + " errors)." : "")
-        );
-        return;
-      }
-
-      const payload = {
-        mode: "bulk",
-        rows: bulkRows,
-      };
-
-      try {
-        showBulkStatus("success", "Uploading... please wait.");
-        const res = await fetch(WEB_APP_URL, {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) {
-          showBulkStatus("error", "Server error: " + res.status + " – please check code.gs / deployment.");
-          return;
-        }
-
-        const data = await res.json().catch(() => ({}));
-
-        if (data.status === "success") {
-          showBulkStatus("success", data.message || "Bulk entries uploaded successfully.");
-          bulkErrorsForDownload = [];
-          const errBtn = document.getElementById("downloadErrorsBtn");
-          if (errBtn) errBtn.style.display = "none";
-        } else if (data.status === "error") {
-          if (Array.isArray(data.errors) && data.errors.length) {
-            bulkRowErrors = new Array(bulkRows.length).fill("");
-            data.errors.forEach((msg) => {
-              const m = msg.match(/Row\s+(\d+)\s*:\s*(.*)/i);
-              if (m) {
-                const rowNumber = parseInt(m[1], 10);
-                const idx = rowNumber - 2;
-                if (idx >= 0 && idx < bulkRowErrors.length) {
-                  bulkRowErrors[idx] = m[2] || "";
-                }
-              }
-            });
-            renderBulkPreview();
-            buildBulkErrorsForDownload();
-
-            showBulkStatus(
-              "error",
-              (data.message || "Some rows are invalid. No data saved.") +
-                "<br><br>" +
-                data.errors.slice(0, 20).join("<br>")
-            );
-          } else {
-            showBulkStatus(
-              "error",
-              data.message || "Error from backend (e.g., some students fees not matching fixed structure)."
-            );
-          }
-        } else {
-          showBulkStatus(
-            "success",
-            data.message || "Bulk entries uploaded successfully (no explicit status in response)."
-          );
-        }
-      } catch (err) {
-        showBulkStatus("error", "Network / script error: " + err.message);
-      }
-    });
-
-    const downloadErrorsBtn = document.getElementById("downloadErrorsBtn");
-    if (downloadErrorsBtn) {
-      downloadErrorsBtn.addEventListener("click", () => {
-        if (!bulkErrorsForDownload || !bulkErrorsForDownload.length) {
-          alert("No errors to download right now.");
-          return;
-        }
-        try {
-          if (typeof XLSX !== "undefined" && XLSX && XLSX.utils) {
-            const ws = XLSX.utils.json_to_sheet(bulkErrorsForDownload);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Errors");
-            XLSX.writeFile(wb, "Fees_Errors.xlsx");
-          } else {
-            const headers = Object.keys(bulkErrorsForDownload[0]);
-            const rows = bulkErrorsForDownload.map((row) =>
-              headers.map((h) => (row[h] != null ? row[h] : "")).join(",")
-            );
-            const csv = headers.join(",") + "\n" + rows.join("\n");
-            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "Fees_Errors.csv";
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          }
-        } catch (err) {
-          alert("Unable to download errors: " + err.message);
-        }
-      });
-    }
-
-    // ===== Dashboard Logic =====
-    async function loadDashboard(forceReload = false) {
-      const classSummaryEl = document.getElementById("classSummaryTable");
-      const studentSummaryEl = document.getElementById("studentSummaryTable");
-      const duesEl = document.getElementById("duesTable");
-      const monthSummaryEl = document.getElementById("monthSummaryTable");
-      const classFilter = document.getElementById("dash_classFilter");
-
-      if (!forceReload && dashboardLoaded && dashboardData) {
-        renderDashboardTables(dashboardData);
-        return;
-      }
-
-      if (classSummaryEl) classSummaryEl.textContent = "Loading...";
-      if (studentSummaryEl) studentSummaryEl.textContent = "Loading...";
-      if (duesEl) duesEl.textContent = "Loading...";
-      if (monthSummaryEl) monthSummaryEl.textContent = "Loading...";
-
-      try {
-        const res = await fetch(WEB_APP_URL + "?mode=dashboard");
-        if (!res.ok) {
-          const msg = "Dashboard fetch failed: " + res.status;
-          if (classSummaryEl) classSummaryEl.textContent = msg;
-          if (studentSummaryEl) studentSummaryEl.textContent = msg;
-          if (duesEl) duesEl.textContent = msg;
-          if (monthSummaryEl) monthSummaryEl.textContent = msg;
-          return;
-        }
-        const data = await res.json();
-        if (data.status !== "success") {
-          const msg = data.message || "Dashboard error from backend.";
-          if (classSummaryEl) classSummaryEl.textContent = msg;
-          if (studentSummaryEl) studentSummaryEl.textContent = msg;
-          if (duesEl) duesEl.textContent = msg;
-          if (monthSummaryEl) monthSummaryEl.textContent = msg;
-          return;
-        }
-        dashboardData = data;
-        dashboardLoaded = true;
-
-        if (classFilter && Array.isArray(data.byClass)) {
-          const existingVal = classFilter.value;
-          classFilter.innerHTML = '<option value="">All Classes</option>';
-          data.byClass.forEach((c) => {
-            const opt = document.createElement("option");
-            opt.value = c.className || "";
-            opt.textContent = c.className || "(No Class)";
-            classFilter.appendChild(opt);
-          });
-          if (existingVal) classFilter.value = existingVal;
-        }
-
-        renderDashboardTables(data);
-      } catch (err) {
-        const msg = "Dashboard network/script error: " + err.message;
-        if (classSummaryEl) classSummaryEl.textContent = msg;
-        if (studentSummaryEl) studentSummaryEl.textContent = msg;
-        if (duesEl) duesEl.textContent = msg;
-        if (monthSummaryEl) monthSummaryEl.textContent = msg;
-      }
-    }
-
-    function renderDashboardTables(data) {
-      const classSummaryEl = document.getElementById("classSummaryTable");
-      const studentSummaryEl = document.getElementById("studentSummaryTable");
-      const duesEl = document.getElementById("duesTable");
-      const monthSummaryEl = document.getElementById("monthSummaryTable");
-      const classFilter = document.getElementById("dash_classFilter");
-
-      if (!data) return;
-
-      // Class-wise
-      if (classSummaryEl) {
-        const rows = Array.isArray(data.byClass) ? data.byClass : [];
-        if (!rows.length) {
-          classSummaryEl.textContent = "No data found.";
-        } else {
-          let html = "<table><thead><tr>";
-          ["Class","Tuition Applicable","Tuition Collection","Tuition Pending","Bus Applicable","Bus Collection","Bus Pending","Total Applicable","Total Collection","Total Pending"].forEach((h) => {
-            html += "<th>" + h + "</th>";
-          });
-          html += "</tr></thead><tbody>";
-          rows.forEach((r) => {
-            html += "<tr>";
-            html += "<td>" + (r.className || "") + "</td>";
-            html += "<td>" + fmtAmount(r.tuitionApplicable) + "</td>";
-            html += "<td>" + fmtAmount(r.tuitionCollected) + "</td>";
-            html += "<td>" + fmtAmount(r.tuitionPending) + "</td>";
-            html += "<td>" + fmtAmount(r.busApplicable) + "</td>";
-            html += "<td>" + fmtAmount(r.busCollected) + "</td>";
-            html += "<td>" + fmtAmount(r.busPending) + "</td>";
-            html += "<td>" + fmtAmount(r.totalApplicable) + "</td>";
-            html += "<td>" + fmtAmount(r.totalCollected) + "</td>";
-            html += "<td>" + fmtAmount(r.totalPending) + "</td>";
-            html += "</tr>";
-          });
-          html += "</tbody></table>";
-          classSummaryEl.innerHTML = html;
-        }
-      }
-
-      // Student-wise
-      if (studentSummaryEl) {
-        let rows = Array.isArray(data.byStudent) ? data.byStudent.slice() : [];
-        const filterVal = classFilter ? classFilter.value : "";
-        if (filterVal) {
-          rows = rows.filter((r) => (r.className || "") === filterVal);
-        }
-        if (!rows.length) {
-          studentSummaryEl.textContent = "No students found for selected filter.";
-        } else {
-          rows.sort((a, b) => {
-            const ca = (a.className || "").localeCompare(b.className || "");
-            if (ca !== 0) return ca;
-            return (a.name || "").localeCompare(b.name || "");
-          });
-          let html = "<table><thead><tr>";
-          ["Student ID","Student Name","Class","Tuition Applicable","Bus Applicable","Total Applicable","Tuition Collection","Bus Collection","Total Collection","Total Pending"].forEach((h) => {
-            html += "<th>" + h + "</th>";
-          });
-          html += "</tr></thead><tbody>";
-          rows.forEach((r) => {
-            html += "<tr>";
-            html += "<td>" + (r.studentId || "") + "</td>";
-            html += "<td>" + (r.name || "") + "</td>";
-            html += "<td>" + (r.className || "") + "</td>";
-            html += "<td>" + fmtAmount(r.tuitionApplicable) + "</td>";
-            html += "<td>" + fmtAmount(r.busApplicable) + "</td>";
-            html += "<td>" + fmtAmount(r.totalApplicable) + "</td>";
-            html += "<td>" + fmtAmount(r.tuitionCollected) + "</td>";
-            html += "<td>" + fmtAmount(r.busCollected) + "</td>";
-            html += "<td>" + fmtAmount(r.totalCollected) + "</td>";
-            html += "<td>" + fmtAmount(r.totalPending) + "</td>";
-            html += "</tr>";
-          });
-          html += "</tbody></table>";
-          studentSummaryEl.innerHTML = html;
-        }
-      }
-
-      // Month-wise
-      if (monthSummaryEl) {
-        const rows = Array.isArray(data.byMonth) ? data.byMonth : [];
-        if (!rows.length) {
-          monthSummaryEl.textContent = "No month-wise data yet.";
-        } else {
-          let html = "<table><thead><tr>";
-          ["Month","Cash Collection","Bank Collection","Total Collection"].forEach((h) => {
-            html += "<th>" + h + "</th>";
-          });
-          html += "</tr></thead><tbody>";
-          rows.forEach((r) => {
-            const total = Number(r.cashCollection || 0) + Number(r.bankCollection || 0);
-            html += "<tr>";
-            html += "<td>" + (r.month || "") + "</td>";
-            html += "<td>" + fmtAmount(r.cashCollection) + "</td>";
-            html += "<td>" + fmtAmount(r.bankCollection) + "</td>";
-            html += "<td>" + fmtAmount(total) + "</td>";
-            html += "</tr>";
-          });
-          html += "</tbody></table>";
-          monthSummaryEl.innerHTML = html;
-        }
-      }
-
-      // Dues report
-      if (duesEl) {
-        let rows = Array.isArray(data.byStudent) ? data.byStudent.filter((r) => (r.totalPending || 0) > 0) : [];
-        if (!rows.length) {
-          duesEl.textContent = "No pending fees – great!";
-        } else {
-          rows.sort((a, b) => {
-            const ca = (a.className || "").localeCompare(b.className || "");
-            if (ca !== 0) return ca;
-            return (a.name || "").localeCompare(b.name || "");
-          });
-          let html = "<table><thead><tr>";
-          ["Student ID","Student Name","Class","Total Applicable","Total Collection","Total Pending"].forEach((h) => {
-            html += "<th>" + h + "</th>";
-          });
-          html += "</tr></thead><tbody>";
-          rows.forEach((r) => {
-            html += "<tr>";
-            html += "<td>" + (r.studentId || "") + "</td>";
-            html += "<td>" + (r.name || "") + "</td>";
-            html += "<td>" + (r.className || "") + "</td>";
-            html += "<td>" + fmtAmount(r.totalApplicable) + "</td>";
-            html += "<td>" + fmtAmount(r.totalCollected) + "</td>";
-            html += "<td>" + fmtAmount(r.totalPending) + "</td>";
-            html += "</tr>";
-          });
-          html += "</tbody></table>";
-          duesEl.innerHTML = html;
-        }
-      }
-
-      // Charts
-      renderClassChart(Array.isArray(data.byClass) ? data.byClass : []);
-      renderMonthChart(Array.isArray(data.byMonth) ? data.byMonth : []);
-    }
-
-    function renderClassChart(rows) {
-      const canvas = document.getElementById("classChart");
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-
-      if (!rows.length) {
-        if (classChartInstance) {
-          classChartInstance.destroy();
-          classChartInstance = null;
-        }
-        return;
-      }
-
-      const labels = rows.map((r) => r.className || "");
-      const collected = rows.map((r) => Number(r.totalCollected || 0));
-      const pending = rows.map((r) => Number(r.totalPending || 0));
-
-      if (classChartInstance) classChartInstance.destroy();
-      classChartInstance = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Total Collected",
-              data: collected,
-            },
-            {
-              label: "Total Pending",
-              data: pending,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: "top" },
-          },
-          scales: {
-            y: { beginAtZero: true },
-          },
-        },
-      });
-    }
-
-    function renderMonthChart(rows) {
-      const canvas = document.getElementById("monthChart");
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-
-      if (!rows.length) {
-        if (monthChartInstance) {
-          monthChartInstance.destroy();
-          monthChartInstance = null;
-        }
-        return;
-      }
-
-      const labels = rows.map((r) => r.month || "");
-      const cash = rows.map((r) => Number(r.cashCollection || 0));
-      const bank = rows.map((r) => Number(r.bankCollection || 0));
-
-      if (monthChartInstance) monthChartInstance.destroy();
-      monthChartInstance = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Cash",
-              data: cash,
-            },
-            {
-              label: "Bank",
-              data: bank,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: "top" },
-          },
-          scales: {
-            y: { beginAtZero: true },
-          },
-        },
-      });
-    }
-
-    const dashRefreshBtn = document.getElementById("dash_refreshBtn");
-    if (dashRefreshBtn) {
-      dashRefreshBtn.addEventListener("click", () => {
-        loadDashboard(true);
-      });
-    }
-
-    const dashClassFilter = document.getElementById("dash_classFilter");
-    if (dashClassFilter) {
-      dashClassFilter.addEventListener("change", () => {
-        if (dashboardData) {
-          renderDashboardTables(dashboardData);
-        }
-      });
-    }
-
-    // ===== Download Excel Template =====
-    document.getElementById("downloadTemplateBtn").addEventListener("click", () => {
-      try {
-        if (!studentsData.length) {
-          alert("Students not loaded yet. Please wait a moment and try again.");
-          return;
-        }
-        const header = [
-          "Student_ID",
-          "Student_Name",
-          "Class",
-          "Receipt_Date",
-          "Fee_Type",
-          "Amount",
-          "Receipt_No",
-          "Payment_Mode",
-          "UTR_No",
-          "Remarks",
+        // --- CONSTANTS ---
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby7aCmtimRNFE8lnVGgGeQozn8oh_gMan3SiI1SNaNcYuweRaOUdBk_PecuB_6lbIcZ/exec";
+        const ALLOWED_FEE_TYPES = ["Opening Balance", "Tuition Fees_25-26", "Bus Fees_25-26"];
+        const ALLOWED_PAYMENT_MODES = ["Cash", "Bank"];
+        const CLASS_ORDER = [
+            "Nursery", "L K G", "UKG", "1st Std", "2nd Std", "3rd Std", 
+            "4th Std", "5th Std", "6th Std", "7th Std", "8th Std", "9th Std", "10th Std"
         ];
-        const data = studentsData.map((s) => ({
-          Student_ID: s.studentId || "",
-          Student_Name: s.name || "",
-          Class: s.class || "",
-          Receipt_Date: "",
-          Fee_Type: "",
-          Amount: "",
-          Receipt_No: "",
-          Payment_Mode: "",
-          UTR_No: "",
-          Remarks: "",
-        }));
 
-        const worksheet = XLSX.utils.json_to_sheet(data, { header });
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Fees_Entry");
+        const getClassRank = (className) => {
+            const index = CLASS_ORDER.indexOf(className);
+            return index === -1 ? 999 : index;
+        };
 
-        XLSX.writeFile(workbook, "Fees_Entry_Template.xlsx");
-      } catch (err) {
-        console.error(err);
-        alert("Unable to generate template: " + err.message);
-      }
-    });
+        // --- UTILS ---
+        const formatCurrency = (amount) => {
+            if (amount === undefined || amount === null || amount === "") return "";
+            const num = Number(amount);
+            if (isNaN(num)) return String(amount);
+            return num.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+        };
 
-    // ===== Load students from backend for dropdowns & template =====
-    async function loadStudents() {
-      try {
-        const res = await fetch(WEB_APP_URL + "?mode=students");
-        const data = await res.json();
-        if (data && data.status === "success" && Array.isArray(data.students)) {
-          studentsData = data.students;
-        } else if (Array.isArray(data)) {
-          studentsData = data;
-        } else {
-          studentsData = [];
-        }
-      } catch (err) {
-        console.error("Error loading students", err);
-        studentsData = [];
-      }
+        const formatDateDDMMYYYY = (isoDateString) => {
+            if (!isoDateString) return "";
+            const d = new Date(isoDateString);
+            if (isNaN(d.getTime())) return isoDateString;
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            return `${dd}-${mm}-${yyyy}`;
+        };
 
-      const pill = document.getElementById("studentCountPill");
-      if (pill) {
-        const count = studentsData.length || 0;
-        pill.textContent = count + " students • Student ID mandatory";
-      }
+        const formatDateTime = (val) => {
+            if (!val) return "";
+            let d = null;
+            // Try parsing ISO
+            if (val.match(/^\d{4}-\d{2}-\d{2}T/)) {
+                d = new Date(val);
+            } else {
+                d = new Date(val);
+            }
+            if (!d || isNaN(d.getTime())) return val;
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mi = String(d.getMinutes()).padStart(2, '0');
+            return `${dd}-${mm}-${yyyy} ${hh}:${mi}`;
+        };
 
-      const classes = Array.from(new Set(studentsData.map((s) => s.class || ""))).filter(Boolean).sort();
-      searchClassFilter.innerHTML = '<option value="">All Classes</option>';
-      classes.forEach((cls) => {
-        const opt = document.createElement("option");
-        opt.value = cls;
-        opt.textContent = cls;
-        searchClassFilter.appendChild(opt);
-      });
+        const sortClassNames = (classes) => {
+            return classes.sort((a, b) => {
+                const ia = CLASS_ORDER.indexOf(a);
+                const ib = CLASS_ORDER.indexOf(b);
+                const rankA = ia === -1 ? 999 : ia;
+                const rankB = ib === -1 ? 999 : ib;
+                return rankA - rankB;
+            });
+        };
 
-      populateStudentFilter("");
-    }
+        // --- COMPONENTS ---
 
-    function populateStudentFilter(classFilterVal) {
-      let list = studentsData;
-      if (classFilterVal) {
-        list = list.filter((s) => (s.class || "") === classFilterVal);
-      }
-      if (!list.length) {
-        searchStudentFilter.innerHTML = '<option value="">No students for selected class</option>';
-        return;
-      }
-      searchStudentFilter.innerHTML = '<option value="">Select Student</option>';
-      list.forEach((s) => {
-        const opt = document.createElement("option");
-        opt.value = s.studentId;
-        opt.textContent = (s.studentId || "") + " - " + (s.name || "");
-        searchStudentFilter.appendChild(opt);
-      });
-    }
+        // 1. StudentSearch
+        const StudentSearch = ({ students, onSelect, selectedStudentId }) => {
+            const [classFilter, setClassFilter] = useState("");
+            const [searchTerm, setSearchTerm] = useState("");
+            const [isOpen, setIsOpen] = useState(false);
+            const wrapperRef = useRef(null);
 
-    // Initial load
-    loadStudents();
-  </script>
+            const classes = useMemo(() => {
+                const unique = Array.from(new Set(students.map(s => s.class || ""))).filter(Boolean);
+                return sortClassNames(unique);
+            }, [students]);
+
+            const filteredStudents = useMemo(() => {
+                let result = students;
+                if (classFilter) {
+                    result = result.filter(s => s.class === classFilter);
+                }
+                if (searchTerm) {
+                    const lower = searchTerm.toLowerCase();
+                    result = result.filter(s => 
+                        (s.studentId || "").toLowerCase().includes(lower) || 
+                        (s.name || "").toLowerCase().includes(lower)
+                    );
+                }
+                return result.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+            }, [students, classFilter, searchTerm]);
+
+            useEffect(() => {
+                const handleClickOutside = (event) => {
+                    if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+                        setIsOpen(false);
+                    }
+                };
+                document.addEventListener("mousedown", handleClickOutside);
+                return () => document.removeEventListener("mousedown", handleClickOutside);
+            }, []);
+
+            const handleSelect = (s) => {
+                onSelect(s);
+                setSearchTerm(`${s.studentId} - ${s.name}`);
+                setIsOpen(false);
+            };
+
+            useEffect(() => {
+                if (!selectedStudentId) {
+                    setSearchTerm("");
+                }
+            }, [selectedStudentId]);
+
+            return (
+                <div className="w-full" ref={wrapperRef}>
+                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center">
+                        <div className="relative min-w-[200px] w-full md:w-auto">
+                            <select
+                                className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 appearance-none cursor-pointer transition-all"
+                                value={classFilter}
+                                onChange={(e) => {
+                                    setClassFilter(e.target.value);
+                                    setSearchTerm("");
+                                }}
+                            >
+                                <option value="">All Classes</option>
+                                {classes.map(c => (
+                                    <option key={c} value={c}>{c}</option>
+                                ))}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </div>
+
+                        <div className="relative w-full">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                            <input
+                                type="text"
+                                className="w-full h-12 pl-12 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 shadow-sm placeholder-slate-400 transition-all"
+                                placeholder={classFilter ? `Search student in ${classFilter}...` : "Search by Name or ID..."}
+                                value={searchTerm}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setIsOpen(true);
+                                }}
+                                onFocus={() => setIsOpen(true)}
+                            />
+                            
+                            {isOpen && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl max-h-72 overflow-y-auto z-50 animate-in">
+                                    {filteredStudents.length === 0 ? (
+                                        <div className="p-6 text-center">
+                                            <p className="text-sm text-slate-500">No students found matching your search.</p>
+                                        </div>
+                                    ) : (
+                                        filteredStudents.map(s => (
+                                            <div
+                                                key={s.studentId}
+                                                className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-slate-50 last:border-0 flex items-center justify-between group transition-colors"
+                                                onClick={() => handleSelect(s)}
+                                            >
+                                                <div>
+                                                    <p className="text-sm font-bold text-slate-800 group-hover:text-blue-700">{s.name}</p>
+                                                    <p className="text-xs text-slate-500 group-hover:text-blue-500">{s.studentId}</p>
+                                                </div>
+                                                <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold group-hover:bg-white group-hover:shadow-sm">{s.class}</span>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 2. TransactionModal
+        const TransactionModal = ({ isOpen, onClose, studentId }) => {
+            const [transactions, setTransactions] = useState([]);
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState("");
+
+            useEffect(() => {
+                if (isOpen && studentId) {
+                    fetchTransactions();
+                } else {
+                    setTransactions([]);
+                }
+            }, [isOpen, studentId]);
+
+            const fetchTransactions = async () => {
+                setLoading(true);
+                setError("");
+                try {
+                    const res = await fetch(`${WEB_APP_URL}?mode=studentTxns&studentId=${encodeURIComponent(studentId)}`);
+                    const data = await res.json();
+                    if (data && Array.isArray(data.transactions)) {
+                        setTransactions(data.transactions);
+                    } else {
+                        setTransactions([]);
+                    }
+                } catch (err) {
+                    setError("Failed to load transactions.");
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            if (!isOpen) return null;
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in">
+                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-800">Student Transactions</h3>
+                                <p className="text-xs text-gray-500">History for ID: {studentId}</p>
+                            </div>
+                            <button 
+                                onClick={onClose}
+                                className="text-gray-400 hover:text-gray-600 text-2xl leading-none focus:outline-none"
+                            >
+                                &times;
+                            </button>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto bg-gray-50/50 flex-1">
+                            {loading && <div className="text-center py-8 text-gray-500">Loading transactions...</div>}
+                            {error && <div className="text-center py-8 text-red-500">{error}</div>}
+                            
+                            {!loading && !error && transactions.length === 0 && (
+                                <div className="text-center py-8 text-gray-500">No transactions found for this student.</div>
+                            )}
+
+                            {!loading && transactions.map((txn, idx) => {
+                                const t = {
+                                    ts: txn.timestamp || txn.TDateTime || txn.Timestamp,
+                                    sid: txn.studentId || txn.Student_ID,
+                                    sname: txn.studentName || txn.Student_Name,
+                                    cls: txn.class || txn.Class,
+                                    rDate: txn.receiptDate || txn.Receipt_Date,
+                                    fType: txn.feeType || txn.Fee_Type,
+                                    amt: txn.amount || txn.Amount,
+                                    rNo: txn.receiptNo || txn.Receipt_No,
+                                    pMode: txn.paymentMode || txn.Payment_Mode,
+                                    utr: txn.utrNo || txn.UTR_No,
+                                    rem: txn.remarks || txn.Remarks
+                                };
+
+                                return (
+                                    <div key={idx} className="bg-white border border-gray-200 rounded-xl p-5 mb-4 shadow-sm last:mb-0">
+                                        <div className="mb-3 pb-2 border-b border-dashed border-gray-200 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                            Transaction #{idx + 1}
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-[140px_1fr] gap-y-2 text-sm">
+                                            <div className="font-semibold text-gray-600">Date & Time</div>
+                                            <div className="text-right text-gray-900">{formatDateTime(t.ts)}</div>
+
+                                            <div className="font-semibold text-gray-600">Student ID</div>
+                                            <div className="text-right text-gray-900">{t.sid}</div>
+
+                                            <div className="font-semibold text-gray-600">Student Name</div>
+                                            <div className="text-right text-gray-900">{t.sid} - {t.sname}</div>
+
+                                            <div className="font-semibold text-gray-600">Class</div>
+                                            <div className="text-right text-gray-900">{t.cls}</div>
+
+                                            <div className="font-semibold text-gray-600">Receipt Date</div>
+                                            <div className="text-right text-gray-900">{t.rDate}</div>
+
+                                            <div className="font-semibold text-gray-600">Fee Type</div>
+                                            <div className="text-right text-gray-900">{t.fType}</div>
+
+                                            <div className="font-semibold text-gray-600">Amount</div>
+                                            <div className="text-right font-bold text-blue-600 text-base">₹{formatCurrency(t.amt)}</div>
+
+                                            <div className="font-semibold text-gray-600">Receipt No</div>
+                                            <div className="text-right text-gray-900">{t.rNo}</div>
+
+                                            <div className="font-semibold text-gray-600">Payment Mode</div>
+                                            <div className="text-right text-gray-900">
+                                                <span className={`px-2 py-0.5 rounded text-xs ${t.pMode === 'Bank' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'}`}>
+                                                    {t.pMode}
+                                                </span>
+                                            </div>
+
+                                            <div className="font-semibold text-gray-600">UTR No</div>
+                                            <div className="text-right text-gray-900">{t.utr || "-"}</div>
+
+                                            <div className="font-semibold text-gray-600">Remarks</div>
+                                            <div className="text-right text-gray-500 italic">{t.rem || "-"}</div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        
+                        <div className="px-6 py-4 border-t border-gray-100 bg-white">
+                            <button 
+                                onClick={onClose}
+                                className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-full transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 3. ReceiptModal
+        const ReceiptModal = ({ isOpen, onClose, data }) => {
+            if (!isOpen || !data) return null;
+
+            const handlePrint = () => {
+                const iframe = document.createElement('iframe');
+                iframe.style.position = 'fixed';
+                iframe.style.right = '0';
+                iframe.style.bottom = '0';
+                iframe.style.width = '0';
+                iframe.style.height = '0';
+                iframe.style.border = '0';
+                document.body.appendChild(iframe);
+
+                const doc = iframe.contentWindow?.document;
+                if (doc) {
+                    doc.open();
+                    doc.write(`
+                        <html>
+                        <head>
+                            <title>Receipt #${data.receiptNo}</title>
+                            <style>
+                            body { font-family: 'Courier New', Courier, monospace; padding: 20px; color: #000; max-width: 300px; margin: 0 auto; }
+                            .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 15px; }
+                            .header h1 { margin: 0; font-size: 18px; font-weight: bold; text-transform: uppercase; }
+                            .header p { margin: 2px 0 0; font-size: 12px; }
+                            .row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; }
+                            .row.bold { font-weight: bold; font-size: 14px; margin-top: 10px; }
+                            .divider { border-bottom: 1px dashed #000; margin: 10px 0; }
+                            .footer { margin-top: 20px; text-align: center; font-size: 10px; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="header">
+                            <h1>JEMS Kadiri</h1>
+                            <p>School Fees Receipt</p>
+                            </div>
+                            <div class="row"><span>Date:</span><span>${data.date}</span></div>
+                            <div class="row"><span>Receipt No:</span><span>${data.receiptNo}</span></div>
+                            <div class="divider"></div>
+                            <div class="row"><span>Student:</span><span>${data.studentName}</span></div>
+                            <div class="row"><span>ID:</span><span>${data.studentId}</span></div>
+                            <div class="row"><span>Class:</span><span>${data.class}</span></div>
+                            <div class="divider"></div>
+                            <div class="row"><span>Fee Type:</span><span>${data.feeType}</span></div>
+                            <div class="row"><span>Mode:</span><span>${data.mode}</span></div>
+                            ${data.remarks ? `<div class="row"><span>Note:</span><span>${data.remarks}</span></div>` : ''}
+                            <div class="divider"></div>
+                            <div class="row bold"><span>TOTAL PAID:</span><span>₹${formatCurrency(data.amount)}</span></div>
+                            <div class="divider"></div>
+                            <div class="footer">
+                            <p>Thank you for your payment.</p>
+                            <p>Authorized Signature</p>
+                            </div>
+                        </body>
+                        </html>
+                    `);
+                    doc.close();
+                    iframe.contentWindow?.focus();
+                    iframe.contentWindow?.print();
+                }
+                
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                }, 1000);
+            };
+
+            return (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in">
+                    <div className="relative w-full max-w-sm mx-auto perspective-1000">
+                        <div className="bg-white w-full shadow-2xl transform transition-all receipt-edge">
+                            <div className="bg-emerald-500 p-6 text-center text-white">
+                                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-sm">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+                                </div>
+                                <h2 className="text-lg font-bold">Payment Successful</h2>
+                                <p className="text-emerald-100 text-xs mt-1">Transaction recorded in system</p>
+                            </div>
+
+                            <div className="p-8 space-y-4">
+                                <div className="flex justify-between items-end border-b border-dashed border-gray-200 pb-4">
+                                    <div className="text-left">
+                                        <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Amount Paid</p>
+                                        <p className="text-3xl font-bold text-slate-800 mt-1">₹{formatCurrency(data.amount)}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Receipt No</p>
+                                        <p className="text-lg font-mono font-bold text-slate-600 mt-1">#{data.receiptNo}</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 pt-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">Student Name</span>
+                                        <span className="font-semibold text-slate-700 text-right w-1/2 truncate">{data.studentName}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">Class</span>
+                                        <span className="font-semibold text-slate-700">{data.class}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">Payment Mode</span>
+                                        <span className="font-semibold text-slate-700">{data.mode}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">Date</span>
+                                        <span className="font-semibold text-slate-700">{data.date}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-6 bg-gray-50 border-t border-gray-100 flex gap-3">
+                                <button 
+                                    onClick={onClose} 
+                                    className="flex-1 py-3 text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors"
+                                >
+                                    Close
+                                </button>
+                                <button 
+                                    onClick={handlePrint} 
+                                    className="flex-1 py-3 bg-slate-800 text-white rounded-xl text-sm font-bold shadow-lg shadow-slate-800/20 hover:bg-slate-900 transform active:scale-95 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                    Print Receipt
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 4. SingleEntry
+        const SingleEntry = ({ students }) => {
+            const [formData, setFormData] = useState({
+                studentId: '', studentName: '', class: '', receiptDate: '', feeType: '', amount: 0, receiptNo: '', paymentMode: '', utrNo: '', remarks: ''
+            });
+
+            const [status, setStatus] = useState(null);
+            const [isSubmitting, setIsSubmitting] = useState(false);
+            
+            const [receiptData, setReceiptData] = useState(null);
+            const [showReceipt, setShowReceipt] = useState(false);
+
+            const handleChange = (field, value) => {
+                setFormData(prev => ({ ...prev, [field]: value }));
+            };
+
+            const handleStudentSelect = (student) => {
+                setFormData(prev => ({
+                    ...prev,
+                    studentId: student.studentId,
+                    studentName: student.name,
+                    class: student.class
+                }));
+                setStatus(null);
+            };
+
+            const clearForm = () => {
+                setFormData({
+                    studentId: '', studentName: '', class: '', receiptDate: '', feeType: '', amount: 0, receiptNo: '', paymentMode: '', utrNo: '', remarks: ''
+                });
+                setStatus(null);
+            };
+
+            const handleSubmit = async () => {
+                if (!formData.studentId) return setStatus({ type: 'error', msg: 'Student ID is required' });
+                if (!formData.receiptDate) return setStatus({ type: 'error', msg: 'Transaction Date is required' });
+                if (!formData.feeType) return setStatus({ type: 'error', msg: 'Fee Type is required' });
+                if (!formData.amount || formData.amount <= 0) return setStatus({ type: 'error', msg: 'Amount must be positive' });
+                if (!formData.receiptNo) return setStatus({ type: 'error', msg: 'Receipt No is required' });
+                if (!formData.paymentMode) return setStatus({ type: 'error', msg: 'Payment Mode is required' });
+                if (formData.paymentMode === 'Bank' && !formData.utrNo) return setStatus({ type: 'error', msg: 'UTR No is required for Bank payments' });
+
+                let formattedDate = formData.receiptDate || "";
+                let displayDate = formData.receiptDate || new Date().toISOString().split('T')[0]; 
+                
+                if (formData.receiptDate) {
+                    const parts = formData.receiptDate.split('-');
+                    if (parts.length === 3) {
+                        formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                        displayDate = `${parts[2]}-${parts[1]}-${parts[0]}`; 
+                    }
+                } else {
+                    const today = new Date();
+                    const dd = String(today.getDate()).padStart(2, '0');
+                    const mm = String(today.getMonth() + 1).padStart(2, '0');
+                    const yyyy = today.getFullYear();
+                    displayDate = `${dd}-${mm}-${yyyy}`;
+                }
+
+                const payload = {
+                    mode: 'single',
+                    studentId: formData.studentId,
+                    studentName: formData.studentName || "",
+                    class: formData.class || "",
+                    receiptDate: formattedDate,
+                    feeType: formData.feeType,
+                    amount: Number(formData.amount),
+                    receiptNo: formData.receiptNo,
+                    paymentMode: formData.paymentMode,
+                    utrNo: formData.utrNo || "",
+                    remarks: formData.remarks || ""
+                };
+
+                setIsSubmitting(true);
+                setStatus({ type: 'success', msg: 'Processing transaction...' });
+
+                try {
+                    const res = await fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        setStatus({ type: 'success', msg: 'Transaction recorded successfully.' });
+                        setReceiptData({
+                            studentId: payload.studentId,
+                            studentName: payload.studentName,
+                            class: payload.class,
+                            receiptNo: payload.receiptNo,
+                            date: displayDate,
+                            amount: payload.amount,
+                            feeType: payload.feeType,
+                            mode: payload.paymentMode,
+                            remarks: payload.remarks
+                        });
+                        setShowReceipt(true);
+                    } else {
+                        setStatus({ type: 'error', msg: data.message || 'Error saving entry.' });
+                    }
+                } catch (e) {
+                    setStatus({ type: 'error', msg: 'Network error: ' + e.message });
+                } finally {
+                    setIsSubmitting(false);
+                }
+            };
+
+            return (
+                <div className="animate-in">
+                    <div className="mb-8">
+                        <StudentSearch 
+                            students={students} 
+                            onSelect={handleStudentSelect} 
+                            selectedStudentId={formData.studentId || ""} 
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-1 space-y-6">
+                            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Student Details</h3>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-500 ml-1 block mb-1">Student Name</label>
+                                        <input type="text" readOnly value={formData.studentName} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 shadow-sm focus:outline-none" placeholder="Select a student above" />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-xs font-medium text-slate-500 ml-1 block mb-1">Class</label>
+                                            <input type="text" readOnly value={formData.class} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 shadow-sm focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-medium text-slate-500 ml-1 block mb-1">ID</label>
+                                            <input type="text" readOnly value={formData.studentId} className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 shadow-sm focus:outline-none" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Transaction Date <span className="text-rose-500">*</span></h3>
+                                <input 
+                                    type="date" 
+                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 shadow-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none"
+                                    value={formData.receiptDate} 
+                                    onChange={e => handleChange('receiptDate', e.target.value)} 
+                                />
+                            </div>
+                        </div>
+
+                        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide mb-6 pb-2 border-b border-slate-100">Payment Details</h3>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Fee Type <span className="text-rose-500">*</span></label>
+                                        <select 
+                                            className="w-full h-12 border border-slate-200 rounded-xl px-3 text-sm bg-slate-50 focus:bg-white transition-colors outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+                                            value={formData.feeType}
+                                            onChange={e => handleChange('feeType', e.target.value)}
+                                        >
+                                            <option value="">Select Fee Type</option>
+                                            {ALLOWED_FEE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Amount (₹) <span className="text-rose-500">*</span></label>
+                                        <div className="relative">
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                                            <input 
+                                                type="number" 
+                                                min="0" 
+                                                step="0.01"
+                                                className="w-full h-12 border border-slate-200 rounded-xl pl-8 pr-3 text-lg font-bold text-slate-800 placeholder-slate-300 outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-400 transition-all"
+                                                placeholder="0.00"
+                                                value={formData.amount || ''}
+                                                onChange={e => handleChange('amount', e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Payment Mode <span className="text-rose-500">*</span></label>
+                                        <div className="flex gap-2">
+                                            {ALLOWED_PAYMENT_MODES.map(m => (
+                                                <button 
+                                                    key={m}
+                                                    onClick={() => handleChange('paymentMode', m)}
+                                                    className={`flex-1 h-12 rounded-xl text-sm font-semibold border transition-all ${
+                                                        formData.paymentMode === m 
+                                                        ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20' 
+                                                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                                                    }`}
+                                                >
+                                                    {m}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className={`transition-all duration-300 ${formData.paymentMode === 'Bank' ? 'opacity-100' : 'opacity-50 grayscale pointer-events-none'}`}>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">UTR / Ref No</label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full h-12 border border-slate-200 rounded-xl px-4 text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+                                            placeholder="Required for Bank"
+                                            value={formData.utrNo}
+                                            onChange={e => handleChange('utrNo', e.target.value)}
+                                            disabled={formData.paymentMode !== 'Bank'}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                <div className="md:col-span-1">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Receipt No <span className="text-rose-500">*</span></label>
+                                    <input 
+                                        type="text" 
+                                        className="w-full h-12 border border-slate-200 rounded-xl px-4 text-sm font-mono text-slate-700 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+                                        placeholder="Auto or Manual"
+                                        value={formData.receiptNo}
+                                        onChange={e => handleChange('receiptNo', e.target.value)}
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Remarks</label>
+                                    <input 
+                                        type="text" 
+                                        className="w-full h-12 border border-slate-200 rounded-xl px-4 text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+                                        placeholder="Optional notes..."
+                                        value={formData.remarks}
+                                        onChange={e => handleChange('remarks', e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-6 border-t border-slate-100">
+                                {status ? (
+                                    <div className={`text-sm font-medium flex items-center gap-2 ${status.type === 'error' ? 'text-rose-600' : 'text-emerald-600'}`}>
+                                        {status.type === 'error' ? (
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        ) : (
+                                            <div className="w-5 h-5 rounded-full border-2 border-emerald-600 border-t-transparent animate-spin"></div>
+                                        )}
+                                        {status.msg}
+                                    </div>
+                                ) : (
+                                    <div></div>
+                                )}
+
+                                <div className="flex gap-3">
+                                    <button onClick={clearForm} className="px-6 py-3 rounded-xl text-slate-600 font-semibold hover:bg-slate-50 transition-colors">Clear</button>
+                                    <button 
+                                        onClick={handleSubmit} 
+                                        disabled={isSubmitting} 
+                                        className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
+                                    >
+                                        {isSubmitting ? 'Processing...' : 'Confirm Payment'}
+                                        {!isSubmitting && <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <ReceiptModal 
+                        isOpen={showReceipt} 
+                        onClose={() => setShowReceipt(false)} 
+                        data={receiptData} 
+                    />
+                </div>
+            );
+        };
+
+        // 5. BulkUpload
+        const BulkUpload = ({ students }) => {
+            const [rows, setRows] = useState([]);
+            const [errors, setErrors] = useState([]);
+            const [status, setStatus] = useState(null);
+            const [isUploading, setIsUploading] = useState(false);
+            const fileInputRef = useRef(null);
+
+            const downloadTemplate = () => {
+                if (students.length === 0) {
+                    alert("Students data not loaded yet. Please wait.");
+                    return;
+                }
+                const header = [
+                    "Student_ID", "Student_Name", "Class", "Receipt_Date", "Fee_Type", "Amount", "Receipt_No", "Payment_Mode", "UTR_No", "Remarks"
+                ];
+                const data = students.map(s => ({
+                    Student_ID: s.studentId,
+                    Student_Name: s.name,
+                    Class: s.class,
+                    Receipt_Date: "",
+                    Fee_Type: "",
+                    Amount: "",
+                    Receipt_No: "",
+                    Payment_Mode: "",
+                    UTR_No: "",
+                    Remarks: ""
+                }));
+                
+                const ws = XLSX.utils.json_to_sheet(data, { header });
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Fees_Entry");
+                XLSX.writeFile(wb, "Fees_Entry_Template.xlsx");
+            };
+
+            const handleFileChange = (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    try {
+                        const data = new Uint8Array(evt.target?.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const sheetName = workbook.SheetNames[0];
+                        const sheet = workbook.Sheets[sheetName];
+                        const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+                        const processed = json.map((row) => {
+                            let rDate = row["Receipt_Date"];
+                            if (typeof rDate === 'number') {
+                                const dateObj = XLSX.SSF.parse_date_code(rDate);
+                                if (dateObj) {
+                                    rDate = `${String(dateObj.d).padStart(2, '0')}-${String(dateObj.m).padStart(2, '0')}-${dateObj.y}`;
+                                }
+                            }
+                            return { ...row, Receipt_Date: rDate };
+                        });
+                        
+                        setRows(processed);
+                        validateRows(processed);
+                    } catch (err) {
+                        console.error(err);
+                        setStatus({ type: 'error', msg: "Failed to parse Excel file." });
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            };
+
+            const validateRows = (data) => {
+                const newErrors = [];
+                data.forEach((row, idx) => {
+                    const msgs = [];
+                    if (!row.Student_ID) msgs.push("Student_ID missing");
+                    if (!row.Fee_Type) msgs.push("Fee_Type missing");
+                    else if (!ALLOWED_FEE_TYPES.includes(row.Fee_Type)) msgs.push("Invalid Fee_Type");
+                    
+                    const amt = Number(row.Amount);
+                    if (isNaN(amt) || amt <= 0) msgs.push("Invalid Amount");
+
+                    if (!row.Receipt_No) msgs.push("Receipt_No missing");
+                    if (!row.Payment_Mode) msgs.push("Payment_Mode missing");
+                    else if (!ALLOWED_PAYMENT_MODES.includes(row.Payment_Mode)) msgs.push("Invalid Payment_Mode");
+
+                    if (row.Payment_Mode === 'Bank' && !row.UTR_No) msgs.push("UTR_No missing for Bank payment");
+
+                    if (msgs.length > 0) {
+                        newErrors[idx] = msgs.join("; ");
+                    } else {
+                        newErrors[idx] = "";
+                    }
+                });
+                setErrors(newErrors);
+            };
+
+            const handleUpload = async () => {
+                const hasError = errors.some(e => e !== "");
+                if (hasError) {
+                    setStatus({ type: 'error', msg: "Please fix the errors highlighted below before uploading." });
+                    return;
+                }
+                if (rows.length === 0) {
+                    setStatus({ type: 'error', msg: "No data to upload." });
+                    return;
+                }
+
+                setIsUploading(true);
+                setStatus({ type: 'success', msg: "Uploading bulk entries..." });
+                
+                try {
+                    const res = await fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ mode: 'bulk', rows })
+                    });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        setStatus({ type: 'success', msg: data.message || "Uploaded successfully!" });
+                        setRows([]);
+                        setErrors([]);
+                        if (fileInputRef.current) fileInputRef.current.value = "";
+                    } else {
+                        setStatus({ type: 'error', msg: data.message || "Upload failed." });
+                    }
+                } catch (e) {
+                    setStatus({ type: 'error', msg: "Network error: " + e.message });
+                } finally {
+                    setIsUploading(false);
+                }
+            };
+
+            return (
+                <div className="animate-in">
+                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 text-sm text-gray-600 flex justify-between items-center flex-wrap gap-4">
+                        <div>
+                            <h3 className="font-semibold text-gray-800 mb-1">Bulk Excel Upload</h3>
+                            <p className="text-xs">Upload multiple records. Validation happens before upload.</p>
+                        </div>
+                        <button onClick={downloadTemplate} className="flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-xs font-medium shadow-sm transition-colors">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Download Template
+                        </button>
+                    </div>
+
+                    <div className="mb-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Upload Excel File (.xlsx)</label>
+                        <input 
+                            type="file" 
+                            accept=".xlsx" 
+                            onChange={handleFileChange} 
+                            ref={fileInputRef}
+                            className="block w-full text-sm text-gray-500
+                            file:mr-4 file:py-2 file:px-4
+                            file:rounded-full file:border-0
+                            file:text-sm file:font-semibold
+                            file:bg-blue-50 file:text-blue-700
+                            hover:file:bg-blue-100"
+                        />
+                    </div>
+
+                    {rows.length > 0 && (
+                        <div className="mb-6 border rounded-lg overflow-hidden border-gray-200">
+                            <div className="max-h-64 overflow-y-auto">
+                                <table className="w-full text-xs text-left whitespace-nowrap">
+                                    <thead className="bg-gray-100 font-semibold text-gray-600 sticky top-0 shadow-sm">
+                                        <tr>
+                                            <th className="px-3 py-2 border-b">#</th>
+                                            <th className="px-3 py-2 border-b text-red-600">Validation</th>
+                                            <th className="px-3 py-2 border-b">Student ID</th>
+                                            <th className="px-3 py-2 border-b">Name</th>
+                                            <th className="px-3 py-2 border-b">Fee Type</th>
+                                            <th className="px-3 py-2 border-b">Amount</th>
+                                            <th className="px-3 py-2 border-b">Mode</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {rows.map((row, idx) => (
+                                            <tr key={idx} className={errors[idx] ? "bg-red-50" : "even:bg-gray-50"}>
+                                                <td className="px-3 py-2">{idx + 1}</td>
+                                                <td className="px-3 py-2 font-medium text-red-600">{errors[idx] || <span className="text-green-500">OK</span>}</td>
+                                                <td className="px-3 py-2">{row.Student_ID}</td>
+                                                <td className="px-3 py-2">{row.Student_Name}</td>
+                                                <td className="px-3 py-2">{row.Fee_Type}</td>
+                                                <td className="px-3 py-2">{row.Amount}</td>
+                                                <td className="px-3 py-2">{row.Payment_Mode}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex items-center justify-end gap-3">
+                        <button onClick={() => { setRows([]); setErrors([]); if(fileInputRef.current) fileInputRef.current.value=''; setStatus(null); }} className="px-5 py-2 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm">Clear</button>
+                        <button 
+                            onClick={handleUpload} 
+                            disabled={isUploading || rows.length === 0}
+                            className={`px-6 py-2 rounded-full text-white text-sm font-medium shadow-md transition-transform active:scale-95 ${isUploading || rows.length === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                        >
+                            {isUploading ? "Uploading..." : "Confirm Upload"}
+                        </button>
+                    </div>
+
+                    {status && (
+                        <div className={`mt-4 p-3 rounded-lg text-sm flex items-center gap-2 ${status.type === 'error' ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'}`}>
+                            <span className="text-lg">{status.type === 'error' ? '⚠️' : '✅'}</span>
+                            {status.msg}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // 6. Dashboard
+        const Dashboard = () => {
+            const [data, setData] = useState(null);
+            const [loading, setLoading] = useState(false);
+            const [filterClass, setFilterClass] = useState("");
+            const [filterStudent, setFilterStudent] = useState("");
+            
+            const [txModalOpen, setTxModalOpen] = useState(false);
+            const [selectedTxStudentId, setSelectedTxStudentId] = useState("");
+
+            const fetchData = async () => {
+                setLoading(true);
+                try {
+                    const res = await fetch(`${WEB_APP_URL}?mode=dashboard`);
+                    const json = await res.json();
+                    if (json.status === 'success') {
+                        setData(json);
+                    }
+                } catch (e) {
+                    console.error("Dashboard fetch error", e);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleRefresh = () => {
+                setFilterClass("");
+                setFilterStudent("");
+                fetchData();
+            };
+
+            const handleShowTransactions = (studentId) => {
+                setSelectedTxStudentId(studentId);
+                setTxModalOpen(true);
+            };
+
+            useEffect(() => {
+                fetchData();
+            }, []);
+
+            const sortedClassNames = useMemo(() => {
+                if (!data) return CLASS_ORDER;
+
+                const set = new Set(CLASS_ORDER);
+
+                if (Array.isArray(data.byClass)) {
+                    data.byClass.forEach(r => {
+                        const cls = r.className || r.class;
+                        if (cls) set.add(cls);
+                    });
+                }
+
+                if (Array.isArray(data.byStudent)) {
+                    data.byStudent.forEach(s => {
+                        const cls = s.className;
+                        if (cls) set.add(cls);
+                    });
+                }
+
+                return sortClassNames([...set]);
+            }, [data]);
+
+            const filteredStudents = useMemo(() => {
+                if (!data?.byStudent) return [];
+                let list = data.byStudent;
+                if (filterClass) {
+                    list = list.filter(s => s.className === filterClass);
+                }
+                return [...list].sort((a, b) => a.name.localeCompare(b.name));
+            }, [data, filterClass]);
+
+            const selectedStudentDetail = useMemo(() => {
+                if (!filterStudent || !data?.byStudent) return null;
+                return data.byStudent.find(s => s.studentId === filterStudent);
+            }, [data, filterStudent]);
+
+            const summaryData = useMemo(() => {
+                if (!data) return [];
+
+                const makeEmpty = (cls) => ({
+                    className: cls,
+                    tApp: 0,
+                    tCol: 0,
+                    tPen: 0,
+                    bApp: 0,
+                    bCol: 0,
+                    bPen: 0,
+                });
+
+                let rows = [];
+
+                if (Array.isArray(data.byClass) && data.byClass.length) {
+                    // Prefer class-level aggregation coming directly from Google Sheet (pivot)
+                    rows = data.byClass.map(r => {
+                        const cls = r.className || r.class || "Unknown";
+                        return {
+                            className: cls,
+                            tApp: Number(r.tuitionApplicable || 0),
+                            tCol: Number(r.tuitionCollected || 0),
+                            tPen: Number(r.tuitionPending || 0),
+                            bApp: Number(r.busApplicable || 0),
+                            bCol: Number(r.busCollected || 0),
+                            bPen: Number(r.busPending || 0),
+                        };
+                    });
+                } else if (Array.isArray(data.byStudent) && data.byStudent.length) {
+                    // Fallback: aggregate from student level
+                    const agg = {};
+                    CLASS_ORDER.forEach(c => {
+                        agg[c] = makeEmpty(c);
+                    });
+
+                    data.byStudent.forEach(s => {
+                        const cls = s.className || "Unknown";
+                        if (!agg[cls]) agg[cls] = makeEmpty(cls);
+
+                        agg[cls].tApp += Number(s.tuitionApplicable || 0);
+                        agg[cls].tCol += Number(s.tuitionCollected || 0);
+                        agg[cls].tPen += Number(s.tuitionPending || 0);
+                        agg[cls].bApp += Number(s.busApplicable || 0);
+                        agg[cls].bCol += Number(s.busCollected || 0);
+                        agg[cls].bPen += Number(s.busPending || 0);
+                    });
+
+                    rows = Object.values(agg);
+                }
+
+                let res = rows.map(item => ({
+                    ...item,
+                    totApp: item.tApp + item.bApp,
+                    totCol: item.tCol + item.bCol,
+                    totPen: item.tPen + item.bPen,
+                }));
+
+                // Apply class filter so entire dashboard follows the same view
+                if (filterClass) {
+                    res = res.filter(item => item.className === filterClass);
+                }
+
+                const finalRes = res.filter(
+                    item => CLASS_ORDER.includes(item.className) && (item.totApp > 0 || item.totCol > 0)
+                );
+                finalRes.sort((a, b) => getClassRank(a.className) - getClassRank(b.className));
+
+                return finalRes;
+            }, [data, filterClass]);
+
+            const grandTotal = useMemo(() => {
+                return summaryData.reduce((acc, curr) => ({
+                    tApp: acc.tApp + curr.tApp,
+                    tCol: acc.tCol + curr.tCol,
+                    tPen: acc.tPen + curr.tPen,
+                    bApp: acc.bApp + curr.bApp,
+                    bCol: acc.bCol + curr.bCol,
+                    bPen: acc.bPen + curr.bPen,
+                    totApp: acc.totApp + curr.totApp,
+                    totCol: acc.totCol + curr.totCol,
+                    totPen: acc.totPen + curr.totPen,
+                }), { tApp: 0, tCol: 0, tPen: 0, bApp: 0, bCol: 0, bPen: 0, totApp: 0, totCol: 0, totPen: 0 });
+            }, [summaryData]);
+            const filteredByMonth = useMemo(() => {
+                if (!data || !Array.isArray(data.byMonth)) return [];
+
+                // If no class filter, show full month-wise data
+                if (!filterClass) return data.byMonth;
+
+                // If backend sends class-wise month data, try to respect it
+                return data.byMonth.filter(m => {
+                    const cls = m.className || m.class;
+                    // If month row is not tagged with a class, keep it even when filtering
+                    if (!cls) return true;
+                    return cls === filterClass;
+                });
+            }, [data, filterClass]);
+
+            const handleDownloadExcel = () => {
+                if (summaryData.length === 0) return;
+                const wsData = summaryData.map(r => ({
+                    "Class": r.className,
+                    "Tuition App": r.tApp, "Tuition Col": r.tCol, "Tuition Pen": r.tPen,
+                    "Bus App": r.bApp, "Bus Col": r.bCol, "Bus Pen": r.bPen,
+                    "Total App": r.totApp, "Total Col": r.totCol, "Total Pen": r.totPen
+                }));
+                wsData.push({
+                    "Class": "GRAND TOTAL",
+                    "Tuition App": grandTotal.tApp, "Tuition Col": grandTotal.tCol, "Tuition Pen": grandTotal.tPen,
+                    "Bus App": grandTotal.bApp, "Bus Col": grandTotal.bCol, "Bus Pen": grandTotal.bPen,
+                    "Total App": grandTotal.totApp, "Total Col": grandTotal.totCol, "Total Pen": grandTotal.totPen
+                });
+                const ws = XLSX.utils.json_to_sheet(wsData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Class Summary");
+                XLSX.writeFile(wb, "Dashboard_Report.xlsx");
+            };
+
+            const collectionPercentage = grandTotal.totApp > 0 ? (grandTotal.totCol / grandTotal.totApp) * 100 : 0;
+
+            const CustomTooltip = ({ active, payload, label }) => {
+                if (active && payload && payload.length) {
+                return (
+                    <div className="bg-slate-800 text-white text-xs p-3 rounded-lg shadow-xl border border-slate-700">
+                    <p className="font-bold mb-1 text-slate-300">{label}</p>
+                    {payload.map((entry, index) => (
+                        <p key={index} style={{ color: entry.color }} className="flex justify-between gap-4">
+                        <span>{entry.name}:</span>
+                        <span className="font-mono font-semibold">₹{formatCurrency(entry.value)}</span>
+                        </p>
+                    ))}
+                    </div>
+                );
+                }
+                return null;
+            };
+
+            return (
+                <div className="space-y-8">
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex flex-wrap justify-between items-center gap-4">
+                        <div className="flex flex-wrap gap-3 items-center">
+                            <div className="relative">
+                                <label className="absolute -top-2 left-2 bg-white px-1 text-[10px] font-bold text-blue-600 uppercase tracking-wider">Class</label>
+                                <select 
+                                    className="h-11 border border-slate-200 rounded-xl px-4 text-sm bg-slate-50 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 min-w-[150px] appearance-none cursor-pointer"
+                                    value={filterClass}
+                                    onChange={(e) => { setFilterClass(e.target.value); setFilterStudent(""); }}
+                                >
+                                    <option value="">All Classes</option>
+                                    {sortedClassNames.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+                            <div className="relative">
+                                <label className="absolute -top-2 left-2 bg-white px-1 text-[10px] font-bold text-blue-600 uppercase tracking-wider">Student</label>
+                                <select 
+                                    className="h-11 border border-slate-200 rounded-xl px-4 text-sm bg-slate-50 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 min-w-[220px] appearance-none cursor-pointer"
+                                    value={filterStudent}
+                                    onChange={(e) => setFilterStudent(e.target.value)}
+                                >
+                                    <option value="">Search Student...</option>
+                                    {filteredStudents.map(s => <option key={s.studentId} value={s.studentId}>{s.name}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={handleDownloadExcel} className="h-10 px-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 border border-emerald-200/50">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Export
+                            </button>
+                            <button onClick={handleRefresh} className="h-10 px-4 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 border border-blue-200/50">
+                                <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Sync
+                            </button>
+                        </div>
+                    </div>
+
+                    {loading && !data && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
+                            {[1,2,3].map(i => <div key={i} className="h-32 bg-slate-100 rounded-2xl"></div>)}
+                        </div>
+                    )}
+
+                    {!loading && data && (
+                        <div className="animate-in">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Total Collected</p>
+                                            <h2 className="text-3xl font-bold text-slate-800 mt-2">₹{formatCurrency(grandTotal.totCol)}</h2>
+                                        </div>
+                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30">
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        </div>
+                                    </div>
+                                    <div className="mt-4">
+                                        <div className="flex justify-between text-xs mb-1">
+                                            <span className="text-slate-400">Progress</span>
+                                            <span className="font-bold text-emerald-600">{collectionPercentage.toFixed(1)}%</span>
+                                        </div>
+                                        <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                                            <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-1000" style={{ width: `${collectionPercentage}%` }}></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Outstanding</p>
+                                            <h2 className="text-3xl font-bold text-slate-800 mt-2">₹{formatCurrency(grandTotal.totPen)}</h2>
+                                        </div>
+                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center text-white shadow-lg shadow-rose-500/30">
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-slate-400 mt-4 bg-rose-50 text-rose-600 inline-block px-2 py-1 rounded-lg font-medium">Requires Attention</p>
+                                </div>
+
+                                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Target Revenue</p>
+                                            <h2 className="text-3xl font-bold text-slate-800 mt-2">₹{formatCurrency(grandTotal.totApp)}</h2>
+                                        </div>
+                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"></path></svg>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 mt-4">
+                                        <div className="flex-1 bg-slate-50 rounded-lg p-2">
+                                            <p className="text-[10px] text-slate-400 uppercase">Tuition</p>
+                                            <p className="font-bold text-sm text-slate-700">₹{formatCurrency(grandTotal.tApp)}</p>
+                                        </div>
+                                        <div className="flex-1 bg-slate-50 rounded-lg p-2">
+                                            <p className="text-[10px] text-slate-400 uppercase">Bus</p>
+                                            <p className="font-bold text-sm text-slate-700">₹{formatCurrency(grandTotal.bApp)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                                    <h3 className="text-sm font-bold text-slate-800 mb-6 uppercase tracking-wide flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-blue-500"></span> Over all Performance
+                                    </h3>
+                                    <div className="h-[300px]">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={[{ name: "Total", applicable: grandTotal.totApp, collected: grandTotal.totCol, pending: grandTotal.totPen }]}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                <XAxis dataKey="name" tick={{fontSize: 10, fill: "#64748b"}} axisLine={false} tickLine={false} />
+                                                <YAxis tick={{fontSize: 10, fill: "#94a3b8"}} axisLine={false} tickLine={false} />
+                                                <Tooltip content={<CustomTooltip />} cursor={{fill: "#f8fafc"}} />
+                                                <Legend iconType="circle" wrapperStyle={{fontSize: "12px", paddingTop: "10px"}} />
+                                                <Bar dataKey="applicable" name="Total Applicable" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={30} />
+                                                <Bar dataKey="collected" name="Total Collected" fill="#10b981" radius={[4, 4, 0, 0]} barSize={30} />
+                                                <Bar dataKey="pending" name="Total Pending" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={30} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                                    <h3 className="text-sm font-bold text-slate-800 mb-6 uppercase tracking-wide flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-purple-500"></span> Monthly Trends
+                                    </h3>
+                                    <div className="h-[300px]">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={filteredByMonth}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                <XAxis dataKey="month" tick={{fontSize: 10, fill: '#64748b'}} interval={0} angle={-45} textAnchor="end" height={60} axisLine={false} tickLine={false} tickFormatter={(value) => { if (!value) return ''; const [mm, yyyy] = String(value).split('-'); const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']; const idx = parseInt(mm, 10) - 1; const monthLabel = monthNames[idx] || mm; return `${monthLabel}-${yyyy}`; }} />
+                                                <YAxis tick={{fontSize: 10, fill: '#64748b'}} width={60} axisLine={false} tickLine={false} tickFormatter={(value) => `${value/1000}k`} />
+                                                <Tooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc'}} />
+                                                <Legend iconType="circle" wrapperStyle={{fontSize: '12px', paddingTop: '10px'}} />
+                                                <Bar dataKey="cashCollection" name="Cash" fill="#3b82f6" stackId="a" radius={[0, 0, 4, 4]} barSize={30} />
+                                                <Bar dataKey="bankCollection" name="Bank" fill="#8b5cf6" stackId="a" radius={[4, 4, 0, 0]} barSize={30} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-8">
+                                <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center backdrop-blur-sm">
+                                    <h3 className="font-bold text-slate-800">Class-wise Breakdown</h3>
+                                </div>
+                                <div className="overflow-x-auto max-h-[600px]">
+                                    <table className="w-full text-xs text-right whitespace-nowrap">
+                                        <thead className="bg-white text-slate-500 sticky top-0 z-20 shadow-sm">
+                                            <tr>
+                                                <th className="px-4 py-4 text-left bg-white font-bold w-24 sticky left-0 z-30 border-b border-slate-100">Class</th>
+                                                <th className="px-4 py-4 bg-white font-semibold border-b border-slate-100 text-slate-400">Tuition App.</th>
+                                                <th className="px-4 py-4 bg-white text-emerald-600 font-semibold border-b border-slate-100">Tuition Col.</th>
+                                                <th className="px-4 py-4 bg-white text-rose-500 font-semibold border-b border-slate-100">Tuition Pen.</th>
+                                                <th className="px-4 py-4 bg-white font-semibold border-b border-slate-100 border-l border-slate-100 text-slate-400">Bus App.</th>
+                                                <th className="px-4 py-4 bg-white text-emerald-600 font-semibold border-b border-slate-100">Bus Col.</th>
+                                                <th className="px-4 py-4 bg-white text-rose-500 font-semibold border-b border-slate-100">Bus Pen.</th>
+                                                <th className="px-4 py-4 bg-slate-50 font-bold text-slate-700 border-b border-slate-100 border-l border-slate-100">Total App.</th>
+                                                <th className="px-4 py-4 bg-emerald-50/50 font-bold text-emerald-700 border-b border-slate-100">Total Col.</th>
+                                                <th className="px-4 py-4 bg-rose-50/50 font-bold text-rose-600 border-b border-slate-100">Total Pen.</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50">
+                                            {summaryData.map((row, idx) => (
+                                                <tr key={idx} className="hover:bg-blue-50/30 transition-colors group">
+                                                    <td className="px-4 py-3 text-left font-semibold text-slate-700 sticky left-0 bg-white group-hover:bg-blue-50/30 border-r border-transparent group-hover:border-blue-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">{row.className}</td>
+                                                    <td className="px-4 py-3 text-slate-400">{formatCurrency(row.tApp)}</td>
+                                                    <td className="px-4 py-3 text-emerald-600">{formatCurrency(row.tCol)}</td>
+                                                    <td className="px-4 py-3 text-rose-500">{formatCurrency(row.tPen)}</td>
+                                                    <td className="px-4 py-3 border-l border-slate-100 text-slate-400">{formatCurrency(row.bApp)}</td>
+                                                    <td className="px-4 py-3 text-emerald-600">{formatCurrency(row.bCol)}</td>
+                                                    <td className="px-4 py-3 text-rose-500">{formatCurrency(row.bPen)}</td>
+                                                    <td className="px-4 py-3 border-l border-slate-100 font-bold text-slate-700 bg-slate-50/30">{formatCurrency(row.totApp)}</td>
+                                                    <td className="px-4 py-3 font-bold text-emerald-700 bg-emerald-50/30">{formatCurrency(row.totCol)}</td>
+                                                    <td className="px-4 py-3 font-bold text-rose-600 bg-rose-50/30">{formatCurrency(row.totPen)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                        <tfoot className="bg-slate-100 font-bold border-t border-slate-200 sticky bottom-0 z-20">
+                                            <tr>
+                                                <td className="px-4 py-4 text-left text-slate-900 sticky left-0 bg-slate-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">Grand Total</td>
+                                                <td className="px-4 py-4 text-slate-600">{formatCurrency(grandTotal.tApp)}</td>
+                                                <td className="px-4 py-4 text-emerald-700">{formatCurrency(grandTotal.tCol)}</td>
+                                                <td className="px-4 py-4 text-rose-600">{formatCurrency(grandTotal.tPen)}</td>
+                                                <td className="px-4 py-4 border-l border-slate-300 text-slate-600">{formatCurrency(grandTotal.bApp)}</td>
+                                                <td className="px-4 py-4 text-emerald-700">{formatCurrency(grandTotal.bCol)}</td>
+                                                <td className="px-4 py-4 text-rose-600">{formatCurrency(grandTotal.bPen)}</td>
+                                                <td className="px-4 py-4 border-l border-slate-300 text-slate-900">{formatCurrency(grandTotal.totApp)}</td>
+                                                <td className="px-4 py-4 text-emerald-700">{formatCurrency(grandTotal.totCol)}</td>
+                                                <td className="px-4 py-4 text-rose-600">{formatCurrency(grandTotal.totPen)}</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {selectedStudentDetail && (
+                                <div className="fixed top-24 right-6 z-40 max-w-md w-full animate-in">
+                                    <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white overflow-hidden">
+                                        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center text-white">
+                                            <div>
+                                                <h3 className="font-bold text-lg">{selectedStudentDetail.name}</h3>
+                                                <p className="text-xs opacity-80 uppercase tracking-wider font-medium">{selectedStudentDetail.studentId} • {selectedStudentDetail.className}</p>
+                                            </div>
+                                            <button 
+                                                onClick={() => handleShowTransactions(selectedStudentDetail.studentId)}
+                                                className="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+                                            >
+                                                History
+                                            </button>
+                                        </div>
+                                        <div className="p-0">
+                                            <table className="w-full text-sm text-left">
+                                                <tbody className="divide-y divide-slate-100">
+                                                    <tr>
+                                                        <td className="px-6 py-3 text-slate-500">Tuition</td>
+                                                        <td className="px-6 py-3 text-right font-medium text-emerald-600">Paid: ₹{formatCurrency(selectedStudentDetail.tuitionCollected)}</td>
+                                                        <td className="px-6 py-3 text-right font-medium text-rose-500">Due: ₹{formatCurrency(selectedStudentDetail.tuitionPending)}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="px-6 py-3 text-slate-500">Bus</td>
+                                                        <td className="px-6 py-3 text-right font-medium text-emerald-600">Paid: ₹{formatCurrency(selectedStudentDetail.busCollected)}</td>
+                                                        <td className="px-6 py-3 text-right font-medium text-rose-500">Due: ₹{formatCurrency(selectedStudentDetail.busPending)}</td>
+                                                    </tr>
+                                                    <tr className="bg-slate-50 font-bold">
+                                                        <td className="px-6 py-4 text-slate-800">Total</td>
+                                                        <td className="px-6 py-4 text-right text-emerald-700">₹{formatCurrency(selectedStudentDetail.totalCollected)}</td>
+                                                        <td className="px-6 py-4 text-right text-rose-600">₹{formatCurrency(selectedStudentDetail.totalPending)}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div className="bg-slate-50 px-6 py-2 border-t border-slate-100 text-right">
+                                            <button onClick={() => setFilterStudent("")} className="text-xs text-slate-400 hover:text-slate-600">Close Panel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <TransactionModal 
+                        isOpen={txModalOpen}
+                        onClose={() => setTxModalOpen(false)}
+                        studentId={selectedTxStudentId}
+                    />
+                </div>
+            );
+        };
+
+        // --- APP COMPONENT ---
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('single');
+            const [students, setStudents] = useState([]);
+            const [loadingStudents, setLoadingStudents] = useState(false);
+
+            useEffect(() => {
+                fetchStudents();
+            }, []);
+
+            const fetchStudents = async () => {
+                setLoadingStudents(true);
+                try {
+                    const res = await fetch(`${WEB_APP_URL}?mode=students`);
+                    const data = await res.json();
+                    if (data.status === 'success' && Array.isArray(data.students)) {
+                        setStudents(data.students);
+                    } else if (Array.isArray(data)) {
+                        setStudents(data);
+                    }
+                } catch (e) {
+                    console.error("Failed to load students", e);
+                } finally {
+                    setLoadingStudents(false);
+                }
+            };
+
+            return (
+                <div className="min-h-screen p-4 md:p-6 max-w-7xl mx-auto">
+                    <header className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8 animate-in">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white shadow-lg shadow-blue-500/10 p-1.5 flex-shrink-0 border border-white">
+                                <img src="https://i.postimg.cc/zvGZJQvq/logo.png" alt="Logo" className="w-full h-full object-contain rounded-xl" />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">JEMS Kadiri</h1>
+                                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Fees Management System</p>
+                            </div>
+                        </div>
+                        
+                        <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-2xl shadow-sm border border-white/50 flex items-center gap-1 w-full md:w-auto overflow-x-auto no-scrollbar">
+                            {[
+                                { id: 'single', label: 'Entry', icon: (
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                )},
+                                { id: 'bulk', label: 'Bulk Upload', icon: (
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                )},
+                                { id: 'dashboard', label: 'Dashboard', icon: (
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"></path></svg>
+                                )}
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                                        activeTab === tab.id 
+                                        ? 'bg-slate-800 text-white shadow-lg shadow-slate-800/20 scale-105' 
+                                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+                                    }`}
+                                >
+                                    {tab.icon}
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+                    </header>
+
+                    <main className="bg-white/60 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 p-6 md:p-8 min-h-[500px] animate-in">
+                        {activeTab === 'single' && (
+                            loadingStudents ? (
+                                <div className="flex flex-col items-center justify-center h-80 text-slate-400 gap-3">
+                                    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                    <p className="text-sm font-medium">Syncing student database...</p>
+                                </div>
+                            ) : (
+                                <SingleEntry students={students} />
+                            )
+                        )}
+
+                        {activeTab === 'bulk' && (
+                            <BulkUpload students={students} />
+                        )}
+
+                        {activeTab === 'dashboard' && (
+                            <Dashboard />
+                        )}
+                    </main>
+                    
+                    <footer className="text-center text-xs text-slate-400 py-8 font-medium">
+                        &copy; {new Date().getFullYear()} JEMS Kadiri • Secure School Management System
+                    </footer>
+                </div>
+            );
+        };
+
+        // --- MOUNT ---
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
