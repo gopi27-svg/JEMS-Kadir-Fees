@@ -878,10 +878,39 @@
                     UTR_No: "",
                     Remarks: ""
                 }));
-                
+
+                // Main data sheet
                 const ws = XLSX.utils.json_to_sheet(data, { header });
+
+                // Guidelines sheet (instructions to fill Excel properly)
+                const guidelines = [
+                    ["BULK UPLOAD – DATA FILLING GUIDELINES"],
+                    [""],
+                    ["Please follow the below instructions to avoid upload errors:"],
+                    [""],
+                    ["1. Student_ID", "Must match exactly with the ID used in the system (no extra spaces, no changes)."],
+                    ["2. Student_Name", "Use proper student name as per records (e.g., Varshitha Reddy K)."],
+                    ["3. Class", "Use the exact class name as in system (e.g., 9th Std, 10th Std, L K G, etc.)."],
+                    ["4. Receipt_Date", "Use DD-MM-YYYY format only (e.g., 05-06-2025)."],
+                    ["5. Fee_Type", "Only use allowed values: Opening Balance / Tuition Fees_25-26 / Bus Fees_25-26."],
+                    ["6. Amount", "Enter only numbers, no commas or currency symbols (e.g., 15000)."],
+                    ["7. Receipt_No", "Enter the proper receipt number. Do not repeat the same number."],
+                    ["8. Payment_Mode", "Use only: Cash or Bank (exact same spelling)."],
+                    ["9. UTR_No", "Mandatory only for Bank payments. Can be blank for Cash."],
+                    ["10. Remarks", "Optional. You may enter any notes like month / term etc."],
+                    ["11. No Formulas", "Do not use Excel formulas. Keep only raw values."],
+                    ["12. No Merged Cells", "Do not merge any cells in the data area."],
+                    ["13. Do Not Change Headers", "Do not rename, delete, or add columns in the template."],
+                    ["14. Sheet Name", "Please keep the sheet name as 'Fees_Entry' for upload."],
+                    [""],
+                    ["✔ After filling the sheet, please review once before uploading in the tool."],
+                    ["✔ Save the file as .xlsx format only."]
+                ];
+                const wsGuide = XLSX.utils.aoa_to_sheet(guidelines);
+
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Fees_Entry");
+                XLSX.utils.book_append_sheet(wb, wsGuide, "Guidelines");
                 XLSX.writeFile(wb, "Fees_Entry_Template.xlsx");
             };
 
@@ -1482,7 +1511,8 @@
                             </div>
 
                             {selectedStudentDetail && (
-                                <div className="fixed top-24 right-6 z-40 max-w-md w-full animate-in">
+                                <div className="fixed inset-0 z-40 flex items-start justify-center bg-white/30 backdrop-blur-md p-4 pt-16" onClick={() => setFilterStudent("")}>
+                                    <div className="max-w-lg w-full animate-in" onClick={(e) => e.stopPropagation()}>
                                     <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white overflow-hidden">
                                         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center text-white">
                                             <div>
@@ -1520,6 +1550,7 @@
                                         <div className="bg-slate-50 px-6 py-2 border-t border-slate-100 text-right">
                                             <button onClick={() => setFilterStudent("")} className="text-xs text-slate-400 hover:text-slate-600">Close Panel</button>
                                         </div>
+                                    </div>
                                     </div>
                                 </div>
                             )}
