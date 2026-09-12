@@ -27,6 +27,9 @@
     <!-- SheetJS (Excel) -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
+    <!-- ExcelJS (used only for generating the Bulk Template, since it supports real in-cell dropdowns / data validation which SheetJS's free build cannot write) -->
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+
     <style>
       :root {
         --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
@@ -858,31 +861,75 @@
             const [isUploading, setIsUploading] = useState(false);
             const fileInputRef = useRef(null);
 
-            const downloadTemplate = () => {
+            const downloadTemplate = async () => {
                 if (students.length === 0) {
                     alert("Students data not loaded yet. Please wait.");
                     return;
                 }
+
+                if (!window.ExcelJS) {
+                    alert("Template generator failed to load. Please check your internet connection and try again.");
+                    return;
+                }
+
                 const header = [
                     "Student_ID", "Student_Name", "Class", "Receipt_Date", "Fee_Type", "Amount", "Receipt_No", "Payment_Mode", "UTR_No", "Remarks"
                 ];
-                const data = students.map(s => ({
-                    Student_ID: s.studentId,
-                    Student_Name: s.name,
-                    Class: s.class,
-                    Receipt_Date: "",
-                    Fee_Type: "",
-                    Amount: "",
-                    Receipt_No: "",
-                    Payment_Mode: "",
-                    UTR_No: "",
-                    Remarks: ""
-                }));
 
-                // Main data sheet
-                const ws = XLSX.utils.json_to_sheet(data, { header });
+                const wb = new ExcelJS.Workbook();
 
-                // Guidelines sheet (instructions to fill Excel properly)
+                // --- Main data sheet ---
+                const ws = wb.addWorksheet("Fees_Entry");
+                ws.columns = header.map((h) => ({ header: h, key: h, width: h === "Student_Name" ? 24 : 16 }));
+
+                students.forEach((s) => {
+                    ws.addRow({
+                        Student_ID: s.studentId,
+                        Student_Name: s.name,
+                        Class: s.class,
+                        Receipt_Date: "",
+                        Fee_Type: "",
+                        Amount: "",
+                        Receipt_No: "",
+                        Payment_Mode: "",
+                        UTR_No: "",
+                        Remarks: ""
+                    });
+                });
+
+                // Bold header row
+                ws.getRow(1).font = { bold: true };
+
+                const lastRow = students.length + 1; // +1 for header row
+
+                // Dropdown for Fee_Type column (column E)
+                for (let r = 2; r <= lastRow; r++) {
+                    ws.getCell(`E${r}`).dataValidation = {
+                        type: "list",
+                        allowBlank: true,
+                        formulae: ['"Tuition Fees_25-26,Bus Fees_25-26,Opening Balance"'],
+                        showErrorMessage: true,
+                        errorStyle: "error",
+                        errorTitle: "Invalid Fee_Type",
+                        error: "Please select a value from the dropdown: Tuition Fees_25-26, Bus Fees_25-26, or Opening Balance."
+                    };
+                }
+
+                // Dropdown for Payment_Mode column (column H) — bonus, same idea as Fee_Type
+                for (let r = 2; r <= lastRow; r++) {
+                    ws.getCell(`H${r}`).dataValidation = {
+                        type: "list",
+                        allowBlank: true,
+                        formulae: ['"Cash,Bank"'],
+                        showErrorMessage: true,
+                        errorStyle: "error",
+                        errorTitle: "Invalid Payment_Mode",
+                        error: "Please select a value from the dropdown: Cash or Bank."
+                    };
+                }
+
+                // --- Guidelines sheet (instructions to fill Excel properly) ---
+                const wsGuide = wb.addWorksheet("Guidelines");
                 const guidelines = [
                     ["BULK UPLOAD – DATA FILLING GUIDELINES"],
                     [""],
@@ -892,10 +939,10 @@
                     ["2. Student_Name", "Use proper student name as per records (e.g., Varshitha Reddy K)."],
                     ["3. Class", "Use the exact class name as in system (e.g., 9th Std, 10th Std, L K G, etc.)."],
                     ["4. Receipt_Date", "Use DD-MM-YYYY format only (e.g., 05-06-2025)."],
-                    ["5. Fee_Type", "Only use allowed values: Opening Balance / Tuition Fees_25-26 / Bus Fees_25-26."],
+                    ["5. Fee_Type", "Use the dropdown in the column: Opening Balance / Tuition Fees_25-26 / Bus Fees_25-26."],
                     ["6. Amount", "Enter only numbers, no commas or currency symbols (e.g., 15000)."],
                     ["7. Receipt_No", "Enter the proper receipt number. Do not repeat the same number."],
-                    ["8. Payment_Mode", "Use only: Cash or Bank (exact same spelling)."],
+                    ["8. Payment_Mode", "Use the dropdown in the column: Cash or Bank."],
                     ["9. UTR_No", "Mandatory only for Bank payments. Can be blank for Cash."],
                     ["10. Remarks", "Optional. You may enter any notes like month / term etc."],
                     ["11. No Formulas", "Do not use Excel formulas. Keep only raw values."],
@@ -906,12 +953,21 @@
                     ["✔ After filling the sheet, please review once before uploading in the tool."],
                     ["✔ Save the file as .xlsx format only."]
                 ];
-                const wsGuide = XLSX.utils.aoa_to_sheet(guidelines);
+                guidelines.forEach((row) => wsGuide.addRow(row));
+                wsGuide.getColumn(1).width = 22;
+                wsGuide.getColumn(2).width = 80;
 
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Fees_Entry");
-                XLSX.utils.book_append_sheet(wb, wsGuide, "Guidelines");
-                XLSX.writeFile(wb, "Fees_Entry_Template.xlsx");
+                // --- Trigger download ---
+                const buffer = await wb.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: "application/octet-stream" });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "Fees_Entry_Template.xlsx";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
             };
 
             const handleFileChange = (e) => {
