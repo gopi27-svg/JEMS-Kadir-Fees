@@ -143,6 +143,13 @@
         // "2nd Std  'B' Section" (double space) and "2nd Std 'B' Section" are the same class
         const normalizeClassName = (c) => String(c || "").replace(/\s+/g, " ").trim();
 
+        // "Nursery 'A' Section" and "Nursery 'B' Section" -> "Nursery"
+        const getBaseClassName = (c) => {
+            const n = normalizeClassName(c);
+            const m = n.match(/^(.*?)\s*['"\u2018\u2019][^'"\u2018\u2019]+['"\u2018\u2019]\s*Section$/i);
+            return m ? m[1].trim() : n;
+        };
+
         // Sort: class order first (Nursery, L K G, UKG, 1st Std ... 10th Std), then section letter
         const compareClassNames = (a, b) => {
             const parts = (c) => {
@@ -1174,7 +1181,11 @@
                     const json = await res.json();
                     if (json.status === 'success') {
                         // Merge look-alike class names (e.g. double spaces) so they never show twice
-                        const fix = (r) => ({ ...r, className: normalizeClassName(r.className || r.class) });
+                        // Sections are grouped: "Nursery 'A' Section" + "Nursery 'B' Section" -> "Nursery"
+                        const fix = (r) => {
+                            const full = normalizeClassName(r.className || r.class);
+                            return { ...r, fullClassName: full, className: getBaseClassName(full) };
+                        };
                         setData({
                             ...json,
                             byStudent: Array.isArray(json.byStudent) ? json.byStudent.map(fix) : [],
@@ -1554,7 +1565,7 @@
                                         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center text-white">
                                             <div>
                                                 <h3 className="font-bold text-lg">{selectedStudentDetail.name}</h3>
-                                                <p className="text-xs opacity-80 uppercase tracking-wider font-medium">{selectedStudentDetail.studentId} • {selectedStudentDetail.className}</p>
+                                                <p className="text-xs opacity-80 uppercase tracking-wider font-medium">{selectedStudentDetail.studentId} • {selectedStudentDetail.fullClassName || selectedStudentDetail.className}</p>
                                             </div>
                                             <button 
                                                 onClick={() => handleShowTransactions(selectedStudentDetail.studentId)}
