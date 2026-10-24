@@ -883,6 +883,7 @@
             const [serverErrors, setServerErrors] = useState([]); // detailed rows rejected by the server
             const [status, setStatus] = useState(null);
             const [isUploading, setIsUploading] = useState(false);
+            const [isChecking, setIsChecking] = useState(false);
             const fileInputRef = useRef(null);
 
             const downloadTemplate = async () => {
@@ -1055,7 +1056,8 @@
                         });
                         
                         setRows(processed);
-                        validateRows(processed);
+                        const localErrs = validateRows(processed);
+                        if (!localErrs.some(e => e)) serverCheck(processed);
                     } catch (err) {
                         console.error(err);
                         setStatus({ type: 'error', msg: "Failed to parse Excel file." });
@@ -1088,6 +1090,40 @@
                     }
                 });
                 setErrors(newErrors);
+                return newErrors;
+            };
+
+            // Dry run: the server checks fee limits / receipt numbers WITHOUT saving anything
+            const serverCheck = async (data) => {
+                setIsChecking(true);
+                setStatus({ type: 'success', msg: 'Checking amounts against fee limits...' });
+                try {
+                    const res = await fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ mode: 'bulk', dryRun: true, rows: data })
+                    });
+                    const out = await res.json();
+                    if (out.status === 'success') {
+                        setServerErrors([]);
+                        setStatus({ type: 'success', msg: 'All rows passed the fee-limit check. Click Confirm Upload to save.' });
+                    } else {
+                        applyServerErrors(data, out);
+                    }
+                } catch (e) {
+                    setStatus({ type: 'error', msg: 'Could not check with the server: ' + e.message });
+                } finally {
+                    setIsChecking(false);
+                }
+            };
+
+            // Mark each rejected row in the Validation column and fill the error table
+            const applyServerErrors = (data, out) => {
+                const list = Array.isArray(out.errorRows) ? out.errorRows : [];
+                const byRow = {};
+                list.forEach(x => { byRow[x.row - 2] = x.issue; });
+                setErrors(data.map((_, i) => byRow[i] || ""));
+                setServerErrors(list);
+                setStatus({ type: 'error', msg: out.message || 'Some rows are invalid.' });
             };
 
             const handleUpload = async () => {
@@ -1117,8 +1153,11 @@
                         setServerErrors([]);
                         if (fileInputRef.current) fileInputRef.current.value = "";
                     } else {
-                        setStatus({ type: 'error', msg: data.message || "Upload failed." });
-                        setServerErrors(Array.isArray(data.errorRows) ? data.errorRows : []);
+                        if (Array.isArray(data.errorRows)) {
+                            applyServerErrors(rows, data);
+                        } else {
+                            setStatus({ type: 'error', msg: data.message || "Upload failed." });
+                        }
                     }
                 } catch (e) {
                     setStatus({ type: 'error', msg: "Network error: " + e.message });
@@ -1162,7 +1201,7 @@
 
                     {errors.some(e => e) && (
                         <div className="mb-3 flex justify-end">
-                            <button onClick={() => downloadErrorFile(localErrorList())} className="px-4 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-700 text-xs font-semibold hover:bg-red-100">
+                            <button onClick={() => downloadErrorFile(serverErrors.length ? serverErrors : localErrorList())} className="px-4 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-700 text-xs font-semibold hover:bg-red-100">
                                 Download Error File
                             </button>
                         </div>
@@ -1204,10 +1243,10 @@
                         <button onClick={() => { setRows([]); setErrors([]); setServerErrors([]); if(fileInputRef.current) fileInputRef.current.value=''; setStatus(null); }} className="px-5 py-2 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm">Clear</button>
                         <button 
                             onClick={handleUpload} 
-                            disabled={isUploading || rows.length === 0}
-                            className={`px-6 py-2 rounded-full text-white text-sm font-medium shadow-md transition-transform active:scale-95 ${isUploading || rows.length === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            disabled={isUploading || isChecking || rows.length === 0}
+                            className={`px-6 py-2 rounded-full text-white text-sm font-medium shadow-md transition-transform active:scale-95 ${isUploading || isChecking || rows.length === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                         >
-                            {isUploading ? "Uploading..." : "Confirm Upload"}
+                            {isUploading ? "Uploading..." : isChecking ? "Checking..." : "Confirm Upload"}
                         </button>
                     </div>
 
