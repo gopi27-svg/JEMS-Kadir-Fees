@@ -140,9 +140,22 @@
             "4th Std", "5th Std", "6th Std", "7th Std", "8th Std", "9th Std", "10th Std"
         ];
 
-        const getClassRank = (className) => {
-            const index = CLASS_ORDER.indexOf(className);
-            return index === -1 ? 999 : index;
+        // "2nd Std  'B' Section" (double space) and "2nd Std 'B' Section" are the same class
+        const normalizeClassName = (c) => String(c || "").replace(/\s+/g, " ").trim();
+
+        // Sort: class order first (Nursery, L K G, UKG, 1st Std ... 10th Std), then section letter
+        const compareClassNames = (a, b) => {
+            const parts = (c) => {
+                const m = normalizeClassName(c).match(/^(.*?)\s*['"\u2018\u2019]([^'"\u2018\u2019]+)['"\u2018\u2019]\s*Section$/i);
+                const base = m ? m[1].trim() : normalizeClassName(c);
+                const sec = m ? m[2].trim() : "";
+                const idx = CLASS_ORDER.indexOf(base);
+                return { rank: idx === -1 ? 999 : idx, base, sec };
+            };
+            const pa = parts(a), pb = parts(b);
+            if (pa.rank !== pb.rank) return pa.rank - pb.rank;
+            if (pa.base !== pb.base) return pa.base.localeCompare(pb.base);
+            return pa.sec.localeCompare(pb.sec);
         };
 
         // --- UTILS ---
@@ -181,15 +194,7 @@
             return `${dd}-${mm}-${yyyy} ${hh}:${mi}`;
         };
 
-        const sortClassNames = (classes) => {
-            return classes.sort((a, b) => {
-                const ia = CLASS_ORDER.indexOf(a);
-                const ib = CLASS_ORDER.indexOf(b);
-                const rankA = ia === -1 ? 999 : ia;
-                const rankB = ib === -1 ? 999 : ib;
-                return rankA - rankB;
-            });
-        };
+        const sortClassNames = (classes) => [...classes].sort(compareClassNames);
 
         // --- COMPONENTS ---
 
@@ -201,14 +206,14 @@
             const wrapperRef = useRef(null);
 
             const classes = useMemo(() => {
-                const unique = Array.from(new Set(students.map(s => s.class || ""))).filter(Boolean);
+                const unique = Array.from(new Set(students.map(s => normalizeClassName(s.class)))).filter(Boolean);
                 return sortClassNames(unique);
             }, [students]);
 
             const filteredStudents = useMemo(() => {
                 let result = students;
                 if (classFilter) {
-                    result = result.filter(s => s.class === classFilter);
+                    result = result.filter(s => normalizeClassName(s.class) === classFilter);
                 }
                 if (searchTerm) {
                     const lower = searchTerm.toLowerCase();
@@ -1168,7 +1173,13 @@
                     const res = await fetch(`${WEB_APP_URL}?mode=dashboard`);
                     const json = await res.json();
                     if (json.status === 'success') {
-                        setData(json);
+                        // Merge look-alike class names (e.g. double spaces) so they never show twice
+                        const fix = (r) => ({ ...r, className: normalizeClassName(r.className || r.class) });
+                        setData({
+                            ...json,
+                            byStudent: Array.isArray(json.byStudent) ? json.byStudent.map(fix) : [],
+                            byClass: Array.isArray(json.byClass) ? json.byClass.map(fix) : []
+                        });
                     }
                 } catch (e) {
                     console.error("Dashboard fetch error", e);
@@ -1193,24 +1204,10 @@
             }, []);
 
             const sortedClassNames = useMemo(() => {
-                if (!data) return CLASS_ORDER;
-
-                const set = new Set(CLASS_ORDER);
-
-                if (Array.isArray(data.byClass)) {
-                    data.byClass.forEach(r => {
-                        const cls = r.className || r.class;
-                        if (cls) set.add(cls);
-                    });
-                }
-
-                if (Array.isArray(data.byStudent)) {
-                    data.byStudent.forEach(s => {
-                        const cls = s.className;
-                        if (cls) set.add(cls);
-                    });
-                }
-
+                if (!data) return [];
+                const set = new Set();
+                (data.byStudent || []).forEach(s => { if (s.className) set.add(s.className); });
+                (data.byClass || []).forEach(r => { if (r.className) set.add(r.className); });
                 return sortClassNames([...set]);
             }, [data]);
 
@@ -1220,7 +1217,7 @@
                 if (filterClass) {
                     list = list.filter(s => s.className === filterClass);
                 }
-                return [...list].sort((a, b) => a.name.localeCompare(b.name));
+                return [...list].sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
             }, [data, filterClass]);
 
             const selectedStudentDetail = useMemo(() => {
@@ -1233,57 +1230,37 @@
 
                 const makeEmpty = (cls) => ({
                     className: cls,
-                    tApp: 0,
-                    tCol: 0,
-                    tPen: 0,
-                    bApp: 0,
-                    bCol: 0,
-                    bPen: 0,
+                    pApp: 0, pCol: 0, pPen: 0,   // FY 25-26 Pending Fees
+                    tApp: 0, tCol: 0, tPen: 0,   // Tuition FY 26-27
+                    bApp: 0, bCol: 0, bPen: 0,   // Bus FY 26-27
                 });
 
-                let rows = [];
+                // Build class rows from the student list (always merges look-alike class names)
+                const agg = {};
+                const source = (Array.isArray(data.byStudent) && data.byStudent.length)
+                    ? data.byStudent
+                    : (data.byClass || []);
 
-                if (Array.isArray(data.byClass) && data.byClass.length) {
-                    // Prefer class-level aggregation coming directly from Google Sheet (pivot)
-                    rows = data.byClass.map(r => {
-                        const cls = r.className || r.class || "Unknown";
-                        return {
-                            className: cls,
-                            tApp: Number(r.tuitionApplicable || 0),
-                            tCol: Number(r.tuitionCollected || 0),
-                            tPen: Number(r.tuitionPending || 0),
-                            bApp: Number(r.busApplicable || 0),
-                            bCol: Number(r.busCollected || 0),
-                            bPen: Number(r.busPending || 0),
-                        };
-                    });
-                } else if (Array.isArray(data.byStudent) && data.byStudent.length) {
-                    // Fallback: aggregate from student level
-                    const agg = {};
-                    CLASS_ORDER.forEach(c => {
-                        agg[c] = makeEmpty(c);
-                    });
+                source.forEach(r => {
+                    const cls = r.className || "Unknown";
+                    if (!agg[cls]) agg[cls] = makeEmpty(cls);
+                    const a = agg[cls];
+                    a.pApp += Number(r.pending2526Applicable || 0);
+                    a.pCol += Number(r.pending2526Collected || 0);
+                    a.pPen += Number(r.pending2526Pending || 0);
+                    a.tApp += Number(r.tuitionApplicable || 0);
+                    a.tCol += Number(r.tuitionCollected || 0);
+                    a.tPen += Number(r.tuitionPending || 0);
+                    a.bApp += Number(r.busApplicable || 0);
+                    a.bCol += Number(r.busCollected || 0);
+                    a.bPen += Number(r.busPending || 0);
+                });
 
-                    data.byStudent.forEach(s => {
-                        const cls = s.className || "Unknown";
-                        if (!agg[cls]) agg[cls] = makeEmpty(cls);
-
-                        agg[cls].tApp += Number(s.tuitionApplicable || 0);
-                        agg[cls].tCol += Number(s.tuitionCollected || 0);
-                        agg[cls].tPen += Number(s.tuitionPending || 0);
-                        agg[cls].bApp += Number(s.busApplicable || 0);
-                        agg[cls].bCol += Number(s.busCollected || 0);
-                        agg[cls].bPen += Number(s.busPending || 0);
-                    });
-
-                    rows = Object.values(agg);
-                }
-
-                let res = rows.map(item => ({
+                let res = Object.values(agg).map(item => ({
                     ...item,
-                    totApp: item.tApp + item.bApp,
-                    totCol: item.tCol + item.bCol,
-                    totPen: item.tPen + item.bPen,
+                    totApp: item.pApp + item.tApp + item.bApp,
+                    totCol: item.pCol + item.tCol + item.bCol,
+                    totPen: item.pPen + item.tPen + item.bPen,
                 }));
 
                 // Apply class filter so entire dashboard follows the same view
@@ -1291,26 +1268,20 @@
                     res = res.filter(item => item.className === filterClass);
                 }
 
-                const finalRes = res.filter(
-                    item => CLASS_ORDER.includes(item.className) && (item.totApp > 0 || item.totCol > 0)
-                );
-                finalRes.sort((a, b) => getClassRank(a.className) - getClassRank(b.className));
+                // Show every class that has any fee / collection (no hard-coded class list)
+                const finalRes = res.filter(item => item.totApp > 0 || item.totCol > 0);
+                finalRes.sort((a, b) => compareClassNames(a.className, b.className));
 
                 return finalRes;
             }, [data, filterClass]);
 
             const grandTotal = useMemo(() => {
-                return summaryData.reduce((acc, curr) => ({
-                    tApp: acc.tApp + curr.tApp,
-                    tCol: acc.tCol + curr.tCol,
-                    tPen: acc.tPen + curr.tPen,
-                    bApp: acc.bApp + curr.bApp,
-                    bCol: acc.bCol + curr.bCol,
-                    bPen: acc.bPen + curr.bPen,
-                    totApp: acc.totApp + curr.totApp,
-                    totCol: acc.totCol + curr.totCol,
-                    totPen: acc.totPen + curr.totPen,
-                }), { tApp: 0, tCol: 0, tPen: 0, bApp: 0, bCol: 0, bPen: 0, totApp: 0, totCol: 0, totPen: 0 });
+                const keys = ["pApp","pCol","pPen","tApp","tCol","tPen","bApp","bCol","bPen","totApp","totCol","totPen"];
+                const zero = Object.fromEntries(keys.map(k => [k, 0]));
+                return summaryData.reduce((acc, curr) => {
+                    keys.forEach(k => { acc[k] += curr[k]; });
+                    return acc;
+                }, zero);
             }, [summaryData]);
             const filteredByMonth = useMemo(() => {
                 if (!data || !Array.isArray(data.byMonth)) return [];
@@ -1329,18 +1300,15 @@
 
             const handleDownloadExcel = () => {
                 if (summaryData.length === 0) return;
-                const wsData = summaryData.map(r => ({
-                    "Class": r.className,
-                    "Tuition App": r.tApp, "Tuition Col": r.tCol, "Tuition Pen": r.tPen,
-                    "Bus App": r.bApp, "Bus Col": r.bCol, "Bus Pen": r.bPen,
+                const toRow = (label, r) => ({
+                    "Class": label,
+                    "FY 25-26 Pending Fees": r.pApp, "FY 25-26 Col": r.pCol, "FY 25-26 Pen": r.pPen,
+                    "Tuition App FY 26-27": r.tApp, "Tuition Col": r.tCol, "Tuition Pen": r.tPen,
+                    "Bus App FY 26-27": r.bApp, "Bus Col": r.bCol, "Bus Pen": r.bPen,
                     "Total App": r.totApp, "Total Col": r.totCol, "Total Pen": r.totPen
-                }));
-                wsData.push({
-                    "Class": "GRAND TOTAL",
-                    "Tuition App": grandTotal.tApp, "Tuition Col": grandTotal.tCol, "Tuition Pen": grandTotal.tPen,
-                    "Bus App": grandTotal.bApp, "Bus Col": grandTotal.bCol, "Bus Pen": grandTotal.bPen,
-                    "Total App": grandTotal.totApp, "Total Col": grandTotal.totCol, "Total Pen": grandTotal.totPen
                 });
+                const wsData = summaryData.map(r => toRow(r.className, r));
+                wsData.push(toRow("GRAND TOTAL", grandTotal));
                 const ws = XLSX.utils.json_to_sheet(wsData);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Class Summary");
@@ -1460,11 +1428,15 @@
                                     </div>
                                     <div className="flex gap-2 mt-4">
                                         <div className="flex-1 bg-slate-50 rounded-lg p-2">
-                                            <p className="text-[10px] text-slate-400 uppercase">Tuition</p>
+                                            <p className="text-[10px] text-slate-400 uppercase">FY 25-26 Pending</p>
+                                            <p className="font-bold text-sm text-slate-700">₹{formatCurrency(grandTotal.pApp)}</p>
+                                        </div>
+                                        <div className="flex-1 bg-slate-50 rounded-lg p-2">
+                                            <p className="text-[10px] text-slate-400 uppercase">Tuition 26-27</p>
                                             <p className="font-bold text-sm text-slate-700">₹{formatCurrency(grandTotal.tApp)}</p>
                                         </div>
                                         <div className="flex-1 bg-slate-50 rounded-lg p-2">
-                                            <p className="text-[10px] text-slate-400 uppercase">Bus</p>
+                                            <p className="text-[10px] text-slate-400 uppercase">Bus 26-27</p>
                                             <p className="font-bold text-sm text-slate-700">₹{formatCurrency(grandTotal.bApp)}</p>
                                         </div>
                                     </div>
@@ -1521,10 +1493,13 @@
                                         <thead className="bg-white text-slate-500 sticky top-0 z-20 shadow-sm">
                                             <tr>
                                                 <th className="px-4 py-4 text-left bg-white font-bold w-24 sticky left-0 z-30 border-b border-slate-100">Class</th>
-                                                <th className="px-4 py-4 bg-white font-semibold border-b border-slate-100 text-slate-400">Tuition App.</th>
+                                                <th className="px-4 py-4 bg-white font-semibold border-b border-slate-100 text-slate-400">FY 25-26 Pending Fees</th>
+                                                <th className="px-4 py-4 bg-white text-emerald-600 font-semibold border-b border-slate-100">FY 25-26 Col.</th>
+                                                <th className="px-4 py-4 bg-white text-rose-500 font-semibold border-b border-slate-100">FY 25-26 Pen.</th>
+                                                <th className="px-4 py-4 bg-white font-semibold border-b border-slate-100 border-l border-slate-100 text-slate-400">Tuition App. FY 26-27</th>
                                                 <th className="px-4 py-4 bg-white text-emerald-600 font-semibold border-b border-slate-100">Tuition Col.</th>
                                                 <th className="px-4 py-4 bg-white text-rose-500 font-semibold border-b border-slate-100">Tuition Pen.</th>
-                                                <th className="px-4 py-4 bg-white font-semibold border-b border-slate-100 border-l border-slate-100 text-slate-400">Bus App.</th>
+                                                <th className="px-4 py-4 bg-white font-semibold border-b border-slate-100 border-l border-slate-100 text-slate-400">Bus App. FY 26-27</th>
                                                 <th className="px-4 py-4 bg-white text-emerald-600 font-semibold border-b border-slate-100">Bus Col.</th>
                                                 <th className="px-4 py-4 bg-white text-rose-500 font-semibold border-b border-slate-100">Bus Pen.</th>
                                                 <th className="px-4 py-4 bg-slate-50 font-bold text-slate-700 border-b border-slate-100 border-l border-slate-100">Total App.</th>
@@ -1536,7 +1511,10 @@
                                             {summaryData.map((row, idx) => (
                                                 <tr key={idx} className="hover:bg-blue-50/30 transition-colors group">
                                                     <td className="px-4 py-3 text-left font-semibold text-slate-700 sticky left-0 bg-white group-hover:bg-blue-50/30 border-r border-transparent group-hover:border-blue-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">{row.className}</td>
-                                                    <td className="px-4 py-3 text-slate-400">{formatCurrency(row.tApp)}</td>
+                                                    <td className="px-4 py-3 text-slate-400">{formatCurrency(row.pApp)}</td>
+                                                    <td className="px-4 py-3 text-emerald-600">{formatCurrency(row.pCol)}</td>
+                                                    <td className="px-4 py-3 text-rose-500">{formatCurrency(row.pPen)}</td>
+                                                    <td className="px-4 py-3 border-l border-slate-100 text-slate-400">{formatCurrency(row.tApp)}</td>
                                                     <td className="px-4 py-3 text-emerald-600">{formatCurrency(row.tCol)}</td>
                                                     <td className="px-4 py-3 text-rose-500">{formatCurrency(row.tPen)}</td>
                                                     <td className="px-4 py-3 border-l border-slate-100 text-slate-400">{formatCurrency(row.bApp)}</td>
@@ -1551,7 +1529,10 @@
                                         <tfoot className="bg-slate-100 font-bold border-t border-slate-200 sticky bottom-0 z-20">
                                             <tr>
                                                 <td className="px-4 py-4 text-left text-slate-900 sticky left-0 bg-slate-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">Grand Total</td>
-                                                <td className="px-4 py-4 text-slate-600">{formatCurrency(grandTotal.tApp)}</td>
+                                                <td className="px-4 py-4 text-slate-600">{formatCurrency(grandTotal.pApp)}</td>
+                                                <td className="px-4 py-4 text-emerald-700">{formatCurrency(grandTotal.pCol)}</td>
+                                                <td className="px-4 py-4 text-rose-600">{formatCurrency(grandTotal.pPen)}</td>
+                                                <td className="px-4 py-4 border-l border-slate-300 text-slate-600">{formatCurrency(grandTotal.tApp)}</td>
                                                 <td className="px-4 py-4 text-emerald-700">{formatCurrency(grandTotal.tCol)}</td>
                                                 <td className="px-4 py-4 text-rose-600">{formatCurrency(grandTotal.tPen)}</td>
                                                 <td className="px-4 py-4 border-l border-slate-300 text-slate-600">{formatCurrency(grandTotal.bApp)}</td>
@@ -1586,12 +1567,17 @@
                                             <table className="w-full text-sm text-left">
                                                 <tbody className="divide-y divide-slate-100">
                                                     <tr>
-                                                        <td className="px-6 py-3 text-slate-500">Tuition</td>
+                                                        <td className="px-6 py-3 text-slate-500">FY 25-26 Pending</td>
+                                                        <td className="px-6 py-3 text-right font-medium text-emerald-600">Paid: ₹{formatCurrency(selectedStudentDetail.pending2526Collected)}</td>
+                                                        <td className="px-6 py-3 text-right font-medium text-rose-500">Due: ₹{formatCurrency(selectedStudentDetail.pending2526Pending)}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="px-6 py-3 text-slate-500">Tuition 26-27</td>
                                                         <td className="px-6 py-3 text-right font-medium text-emerald-600">Paid: ₹{formatCurrency(selectedStudentDetail.tuitionCollected)}</td>
                                                         <td className="px-6 py-3 text-right font-medium text-rose-500">Due: ₹{formatCurrency(selectedStudentDetail.tuitionPending)}</td>
                                                     </tr>
                                                     <tr>
-                                                        <td className="px-6 py-3 text-slate-500">Bus</td>
+                                                        <td className="px-6 py-3 text-slate-500">Bus 26-27</td>
                                                         <td className="px-6 py-3 text-right font-medium text-emerald-600">Paid: ₹{formatCurrency(selectedStudentDetail.busCollected)}</td>
                                                         <td className="px-6 py-3 text-right font-medium text-rose-500">Due: ₹{formatCurrency(selectedStudentDetail.busPending)}</td>
                                                     </tr>
