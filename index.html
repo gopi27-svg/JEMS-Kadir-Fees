@@ -134,6 +134,7 @@
         // --- CONSTANTS ---
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby7aCmtimRNFE8lnVGgGeQozn8oh_gMan3SiI1SNaNcYuweRaOUdBk_PecuB_6lbIcZ/exec";
         const ALLOWED_FEE_TYPES = ["Opening Balance", "Tuition Fees_26-27", "Bus Fees_26-27"];
+        const EXCESS_FEE_TYPE = "Excess Payment"; // used only by the Excess tab
         const ALLOWED_PAYMENT_MODES = ["Cash", "Bank"];
         const CLASS_ORDER = [
             "Nursery", "L K G", "UKG", "1st Std", "2nd Std", "3rd Std", 
@@ -589,7 +590,7 @@
         };
 
         // 4. SingleEntry
-        const SingleEntry = ({ students }) => {
+        const SingleEntry = ({ students, excess = false }) => {
             const [formData, setFormData] = useState({
                 studentId: '', studentName: '', class: '', receiptDate: '', feeType: '', amount: 0, receiptNo: '', paymentMode: '', utrNo: '', remarks: ''
             });
@@ -624,7 +625,7 @@
             const handleSubmit = async () => {
                 if (!formData.studentId) return setStatus({ type: 'error', msg: 'Student ID is required' });
                 if (!formData.receiptDate) return setStatus({ type: 'error', msg: 'Transaction Date is required' });
-                if (!formData.feeType) return setStatus({ type: 'error', msg: 'Fee Type is required' });
+                if (!excess && !formData.feeType) return setStatus({ type: 'error', msg: 'Fee Type is required' });
                 if (!formData.amount || formData.amount <= 0) return setStatus({ type: 'error', msg: 'Amount must be positive' });
                 if (!formData.receiptNo) return setStatus({ type: 'error', msg: 'Receipt No is required' });
                 if (!formData.paymentMode) return setStatus({ type: 'error', msg: 'Payment Mode is required' });
@@ -648,12 +649,12 @@
                 }
 
                 const payload = {
-                    mode: 'single',
+                    mode: excess ? 'excess' : 'single',
                     studentId: formData.studentId,
                     studentName: formData.studentName || "",
                     class: formData.class || "",
                     receiptDate: formattedDate,
-                    feeType: formData.feeType,
+                    feeType: excess ? EXCESS_FEE_TYPE : formData.feeType,
                     amount: Number(formData.amount),
                     receiptNo: formData.receiptNo,
                     paymentMode: formData.paymentMode,
@@ -671,7 +672,7 @@
                     });
                     const data = await res.json();
                     if (data.status === 'success') {
-                        setStatus({ type: 'success', msg: 'Transaction recorded successfully.' });
+                        setStatus({ type: 'success', msg: excess ? 'Excess payment recorded successfully.' : 'Transaction recorded successfully.' });
                         setReceiptData({
                             studentId: payload.studentId,
                             studentName: payload.studentName,
@@ -696,6 +697,12 @@
 
             return (
                 <div className="animate-in">
+                    {excess && (
+                        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+                            <p className="font-semibold">Excess / Advance Payment</p>
+                            <p className="text-xs mt-1">Use this when a parent pays more than the fees due. It is saved as <b>Excess Payment</b>, has no fee limit, and is shown separately in the Dashboard (it does not reduce any pending amount).</p>
+                        </div>
+                    )}
                     <div className="mb-8">
                         <StudentSearch 
                             students={students} 
@@ -744,6 +751,9 @@
                                 <div className="space-y-4">
                                     <div>
                                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Fee Type <span className="text-rose-500">*</span></label>
+                                        {excess ? (
+                                            <input type="text" readOnly value={EXCESS_FEE_TYPE} className="w-full h-12 border border-amber-200 rounded-xl px-3 text-sm bg-amber-50 text-amber-800 font-semibold outline-none" />
+                                        ) : (
                                         <select 
                                             className="w-full h-12 border border-slate-200 rounded-xl px-3 text-sm bg-slate-50 focus:bg-white transition-colors outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
                                             value={formData.feeType}
@@ -752,6 +762,7 @@
                                             <option value="">Select Fee Type</option>
                                             {ALLOWED_FEE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                                         </select>
+                                        )}
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Amount (₹) <span className="text-rose-500">*</span></label>
@@ -869,6 +880,7 @@
         const BulkUpload = ({ students }) => {
             const [rows, setRows] = useState([]);
             const [errors, setErrors] = useState([]);
+            const [serverErrors, setServerErrors] = useState([]); // detailed rows rejected by the server
             const [status, setStatus] = useState(null);
             const [isUploading, setIsUploading] = useState(false);
             const fileInputRef = useRef(null);
@@ -953,7 +965,7 @@
                     ["4. Receipt_Date", "Use DD-MM-YYYY format only (e.g., 05-06-2025)."],
                     ["5. Fee_Type", "Use the dropdown in the column: Opening Balance / Tuition Fees_26-27 / Bus Fees_26-27."],
                     ["6. Amount", "Enter only numbers, no commas or currency symbols (e.g., 15000)."],
-                    ["7. Receipt_No", "Enter the proper receipt number. Do not repeat the same number."],
+                    ["7. Receipt_No", "Enter the proper receipt number. A number cannot be used for another student, or twice for the same student and Fee_Type (one receipt may cover different Fee_Types of the same student)."],
                     ["8. Payment_Mode", "Use the dropdown in the column: Cash or Bank."],
                     ["9. UTR_No", "Mandatory only for Bank payments. Can be blank for Cash."],
                     ["10. Remarks", "Optional. You may enter any notes like month / term etc."],
@@ -982,9 +994,45 @@
                 window.URL.revokeObjectURL(url);
             };
 
+            // Builds an Excel file listing every rejected row with Applicable / Already Paid / Balance
+            const downloadErrorFile = (list) => {
+                if (!list || list.length === 0) return;
+                const data = list.map(e => ({
+                    "Excel_Row_No": e.row,
+                    "Student_ID": e.studentId,
+                    "Student_Name": e.studentName,
+                    "Fee_Type": e.feeType,
+                    "Amount_Entered": e.amountEntered,
+                    "Receipt_No": e.receiptNo,
+                    "Applicable_Amount": e.applicable,
+                    "Already_Paid": e.alreadyPaid,
+                    "Balance_Due": e.balance,
+                    "Issue": e.issue
+                }));
+                const ws = XLSX.utils.json_to_sheet(data);
+                ws['!cols'] = [8, 24, 30, 20, 14, 12, 16, 12, 12, 90].map(w => ({ wch: w }));
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Upload_Errors");
+                XLSX.writeFile(wb, "Bulk_Upload_Errors.xlsx");
+            };
+
+            // Errors found by the page itself (before upload) in the same format
+            const localErrorList = () => rows.map((row, idx) => errors[idx] ? ({
+                row: idx + 2,
+                studentId: row.Student_ID || "",
+                studentName: row.Student_Name || "",
+                feeType: row.Fee_Type || "",
+                amountEntered: row.Amount || "",
+                receiptNo: row.Receipt_No || "",
+                applicable: "", alreadyPaid: "", balance: "",
+                issue: errors[idx]
+            }) : null).filter(Boolean);
+
             const handleFileChange = (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
+                setServerErrors([]);
+                setStatus(null);
 
                 const reader = new FileReader();
                 reader.onload = (evt) => {
@@ -1066,9 +1114,11 @@
                         setStatus({ type: 'success', msg: data.message || "Uploaded successfully!" });
                         setRows([]);
                         setErrors([]);
+                        setServerErrors([]);
                         if (fileInputRef.current) fileInputRef.current.value = "";
                     } else {
                         setStatus({ type: 'error', msg: data.message || "Upload failed." });
+                        setServerErrors(Array.isArray(data.errorRows) ? data.errorRows : []);
                     }
                 } catch (e) {
                     setStatus({ type: 'error', msg: "Network error: " + e.message });
@@ -1110,6 +1160,13 @@
                         />
                     </div>
 
+                    {errors.some(e => e) && (
+                        <div className="mb-3 flex justify-end">
+                            <button onClick={() => downloadErrorFile(localErrorList())} className="px-4 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-700 text-xs font-semibold hover:bg-red-100">
+                                Download Error File
+                            </button>
+                        </div>
+                    )}
                     {rows.length > 0 && (
                         <div className="mb-6 border rounded-lg overflow-hidden border-gray-200">
                             <div className="max-h-64 overflow-y-auto">
@@ -1144,7 +1201,7 @@
                     )}
 
                     <div className="flex items-center justify-end gap-3">
-                        <button onClick={() => { setRows([]); setErrors([]); if(fileInputRef.current) fileInputRef.current.value=''; setStatus(null); }} className="px-5 py-2 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm">Clear</button>
+                        <button onClick={() => { setRows([]); setErrors([]); setServerErrors([]); if(fileInputRef.current) fileInputRef.current.value=''; setStatus(null); }} className="px-5 py-2 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm">Clear</button>
                         <button 
                             onClick={handleUpload} 
                             disabled={isUploading || rows.length === 0}
@@ -1158,6 +1215,47 @@
                         <div className={`mt-4 p-3 rounded-lg text-sm flex items-center gap-2 ${status.type === 'error' ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'}`}>
                             <span className="text-lg">{status.type === 'error' ? '⚠️' : '✅'}</span>
                             {status.msg}
+                        </div>
+                    )}
+
+                    {serverErrors.length > 0 && (
+                        <div className="mt-4 border border-red-200 rounded-lg overflow-hidden">
+                            <div className="px-4 py-3 bg-red-50 flex flex-wrap justify-between items-center gap-3">
+                                <p className="text-sm font-semibold text-red-700">{serverErrors.length} row(s) rejected – nothing was saved</p>
+                                <button onClick={() => downloadErrorFile(serverErrors)} className="px-4 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700">
+                                    Download Error File
+                                </button>
+                            </div>
+                            <div className="max-h-72 overflow-auto">
+                                <table className="w-full text-xs text-left whitespace-nowrap">
+                                    <thead className="bg-gray-100 font-semibold text-gray-600 sticky top-0">
+                                        <tr>
+                                            <th className="px-3 py-2 border-b">Row</th>
+                                            <th className="px-3 py-2 border-b">Student ID</th>
+                                            <th className="px-3 py-2 border-b">Fee Type</th>
+                                            <th className="px-3 py-2 border-b text-right">Entered</th>
+                                            <th className="px-3 py-2 border-b text-right">Applicable</th>
+                                            <th className="px-3 py-2 border-b text-right">Paid</th>
+                                            <th className="px-3 py-2 border-b text-right">Balance</th>
+                                            <th className="px-3 py-2 border-b">Issue</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {serverErrors.map((e, i) => (
+                                            <tr key={i} className="bg-red-50/40">
+                                                <td className="px-3 py-2">{e.row}</td>
+                                                <td className="px-3 py-2">{e.studentId}</td>
+                                                <td className="px-3 py-2">{e.feeType}</td>
+                                                <td className="px-3 py-2 text-right">{formatCurrency(e.amountEntered)}</td>
+                                                <td className="px-3 py-2 text-right">{formatCurrency(e.applicable)}</td>
+                                                <td className="px-3 py-2 text-right">{formatCurrency(e.alreadyPaid)}</td>
+                                                <td className="px-3 py-2 text-right">{formatCurrency(e.balance)}</td>
+                                                <td className="px-3 py-2 text-red-600 whitespace-normal min-w-[260px]">{e.issue}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -1242,7 +1340,7 @@
                 const makeEmpty = (cls) => ({
                     className: cls,
                     pApp: 0, pCol: 0, pPen: 0,   // FY 25-26 Pending Fees
-                    disc: 0, netPen: 0,          // Discount, total pending after discount
+                    disc: 0, exc: 0, netPen: 0,    // Discount, Excess paid, total pending after discount
                     tApp: 0, tCol: 0, tPen: 0,   // Tuition FY 26-27
                     bApp: 0, bCol: 0, bPen: 0,   // Bus FY 26-27
                 });
@@ -1267,6 +1365,7 @@
                     a.bCol += Number(r.busCollected || 0);
                     a.bPen += Number(r.busPending || 0);
                     a.disc += Number(r.discount || 0);
+                    a.exc += Number(r.excessPaid || 0);
                     a.netPen += Number(r.totalPending || 0);
                 });
 
@@ -1290,7 +1389,7 @@
             }, [data, filterClass]);
 
             const grandTotal = useMemo(() => {
-                const keys = ["pApp","pCol","pPen","tApp","tCol","tPen","bApp","bCol","bPen","disc","totApp","totCol","totPen"];
+                const keys = ["pApp","pCol","pPen","tApp","tCol","tPen","bApp","bCol","bPen","disc","exc","totApp","totCol","totPen"];
                 const zero = Object.fromEntries(keys.map(k => [k, 0]));
                 return summaryData.reduce((acc, curr) => {
                     keys.forEach(k => { acc[k] += curr[k]; });
@@ -1319,7 +1418,7 @@
                     "FY 25-26 Pending Fees": r.pApp, "FY 25-26 Col": r.pCol, "FY 25-26 Pen": r.pPen,
                     "Tuition App FY 26-27": r.tApp, "Tuition Col": r.tCol, "Tuition Pen": r.tPen,
                     "Bus App FY 26-27": r.bApp, "Bus Col": r.bCol, "Bus Pen": r.bPen,
-                    "Total App": r.totApp, "Total Col": r.totCol, "Discount": r.disc, "Total Pen": r.totPen
+                    "Total App": r.totApp, "Total Col": r.totCol, "Discount": r.disc, "Excess Paid": r.exc, "Total Pen": r.totPen
                 });
                 const wsData = summaryData.map(r => toRow(r.className, r));
                 wsData.push(toRow("GRAND TOTAL", grandTotal));
@@ -1520,6 +1619,7 @@
                                                 <th className="px-4 py-4 bg-slate-50 font-bold text-slate-700 border-b border-slate-100 border-l border-slate-100">Total App.</th>
                                                 <th className="px-4 py-4 bg-emerald-50/50 font-bold text-emerald-700 border-b border-slate-100">Total Col.</th>
                                                 <th className="px-4 py-4 bg-amber-50/50 font-bold text-amber-600 border-b border-slate-100">Discount</th>
+                                                <th className="px-4 py-4 bg-sky-50/50 font-bold text-sky-600 border-b border-slate-100">Excess Paid</th>
                                                 <th className="px-4 py-4 bg-rose-50/50 font-bold text-rose-600 border-b border-slate-100">Total Pen.</th>
                                             </tr>
                                         </thead>
@@ -1539,6 +1639,7 @@
                                                     <td className="px-4 py-3 border-l border-slate-100 font-bold text-slate-700 bg-slate-50/30">{formatCurrency(row.totApp)}</td>
                                                     <td className="px-4 py-3 font-bold text-emerald-700 bg-emerald-50/30">{formatCurrency(row.totCol)}</td>
                                                     <td className="px-4 py-3 font-bold text-amber-600 bg-amber-50/30">{formatCurrency(row.disc)}</td>
+                                                    <td className="px-4 py-3 font-bold text-sky-600 bg-sky-50/30">{formatCurrency(row.exc)}</td>
                                                     <td className="px-4 py-3 font-bold text-rose-600 bg-rose-50/30">{formatCurrency(row.totPen)}</td>
                                                 </tr>
                                             ))}
@@ -1558,6 +1659,7 @@
                                                 <td className="px-4 py-4 border-l border-slate-300 text-slate-900">{formatCurrency(grandTotal.totApp)}</td>
                                                 <td className="px-4 py-4 text-emerald-700">{formatCurrency(grandTotal.totCol)}</td>
                                                 <td className="px-4 py-4 text-amber-600">{formatCurrency(grandTotal.disc)}</td>
+                                                <td className="px-4 py-4 text-sky-600">{formatCurrency(grandTotal.exc)}</td>
                                                 <td className="px-4 py-4 text-rose-600">{formatCurrency(grandTotal.totPen)}</td>
                                             </tr>
                                         </tfoot>
@@ -1602,6 +1704,10 @@
                                                     <tr>
                                                         <td className="px-6 py-3 text-slate-500">Discount</td>
                                                         <td className="px-6 py-3 text-right font-medium text-amber-600" colSpan={2}>₹{formatCurrency(selectedStudentDetail.discount)}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="px-6 py-3 text-slate-500">Excess Paid</td>
+                                                        <td className="px-6 py-3 text-right font-medium text-sky-600" colSpan={2}>₹{formatCurrency(selectedStudentDetail.excessPaid)}</td>
                                                     </tr>
                                                     <tr className="bg-slate-50 font-bold">
                                                         <td className="px-6 py-4 text-slate-800">Total</td>
@@ -1675,6 +1781,9 @@
                                 { id: 'single', label: 'Entry', icon: (
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                 )},
+                                { id: 'excess', label: 'Excess', icon: (
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                )},
                                 { id: 'bulk', label: 'Bulk Upload', icon: (
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                                 )},
@@ -1707,6 +1816,17 @@
                                 </div>
                             ) : (
                                 <SingleEntry students={students} />
+                            )
+                        )}
+
+                        {activeTab === 'excess' && (
+                            loadingStudents ? (
+                                <div className="flex flex-col items-center justify-center h-80 text-slate-400 gap-3">
+                                    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                    <p className="text-sm font-medium">Syncing student database...</p>
+                                </div>
+                            ) : (
+                                <SingleEntry key="excess" students={students} excess={true} />
                             )
                         )}
 
